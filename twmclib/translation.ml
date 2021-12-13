@@ -100,10 +100,10 @@ module Make(L : Logic.S) = struct
     S.iter_samples add_sample inst.samples;
     HT.iter (fun _ a -> complete a) ht;
     {
-      Compact.valuation =
+      Counterexample.valuation =
         HT.to_seq ht
         |> Seq.map (fun (x, a) -> x, Compact.make a)
         |> List.of_seq;
-      Compact.point = model inst.test;
+      Counterexample.point = model inst.test;
     }
 end

@@ -102,7 +102,7 @@ let to_solution
           exit 1
        | Some _ ->
           (* TODO *)
-          `Invalid Countermodel.dummy
+          `Invalid Counterexample.dummy
        end
   in
 

@@ -1,6 +1,6 @@
 type t =
   | Valid
-  | Invalid of Compact.counterexample
+  | Invalid of Counterexample.t
   | Internal_error of string
 
 let print res =
@@ -9,7 +9,7 @@ let print res =
   | Valid ->
      !^ "valid"
   | Invalid cex ->
-     prefix 2 1 (!^ "invalid:") (Compact.print_counterexample cex)
+     prefix 2 1 (!^ "invalid:") (Counterexample.print cex)
   | Internal_error msg ->
      prefix 2 1
        (!^ "error (please report to https://github.com/adrieng/twmc/issues):")
@@ -20,7 +20,7 @@ let equal ?(consider_counterexamples = false) r1 r2 =
   | Valid, Valid ->
      true
   | Invalid cex1, Invalid cex2 ->
-     not consider_counterexamples || Compact.equal_counterexample cex1 cex2
+     not consider_counterexamples || Counterexample.equal cex1 cex2
   | Internal_error msg1, Internal_error msg2 ->
      msg1 = msg2
   | _ ->

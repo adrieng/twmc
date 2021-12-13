@@ -8,7 +8,7 @@
    problem, that is, on a relation of the form [u <= v] where. *)
 type t =
   | Valid (** The relation holds in all cases. *)
-  | Invalid of Compact.counterexample
+  | Invalid of Counterexample.t
   (** The relation does not hold in some cases, including the specified one. *)
   | Internal_error of string (** Something went wrong. *)
 

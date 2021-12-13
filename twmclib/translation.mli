@@ -21,5 +21,5 @@ module Make(L : Logic.S) : sig
 
   (** [counterexample inst model] returns a counterexample from a model [model]
      for [inst.problem]. *)
-  val counterexample : instance -> (L.var -> int) -> Compact.counterexample
+  val counterexample : instance -> (L.var -> int) -> Counterexample.t
 end

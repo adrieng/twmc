@@ -28,4 +28,4 @@ val to_logic :
   ('a, 'a list) solver
 
 val to_solution :
-  (Backends.Z3.query, [`Valid | `Invalid of Countermodel.t]) solver
+  (Backends.Z3.query, [`Valid | `Invalid of Counterexample.t]) solver

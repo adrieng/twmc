@@ -34,23 +34,3 @@ let eval p i =
 
 let equal p1 p2 =
   p1.last = p2.last && Array.for_all2 ( = ) p1.u p2.u
-
-type counterexample =
-  {
-    valuation : (Warp.id * t) list;
-    point : int;
-  }
-
-let print_counterexample { valuation; point; } =
-  let open PPrint in
-  let binding (x, t) =
-    PPrint.prefix 2 1 (Warp.Print.id x) (print t)
-  in
-  prefix 2 1 (!^ "values:")
-    (surround_separate_map 2 1
-       (!^ "[]") (!^ "[") (!^ ",") (!^ "]") binding valuation)
-  ^^ prefix 2 1 (!^ "discrepancy:") (!^ (string_of_int point))
-
-let equal_counterexample cex1 cex2 =
-  cex1.point = cex2.point
-  && Equal.assoc_list (=) equal cex1.valuation cex2.valuation
