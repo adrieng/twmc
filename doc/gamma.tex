@@ -1,0 +1,223 @@
+\documentclass{scrartcl}
+\usepackage{mathrsfs}
+\usepackage{amsmath,amsthm,amssymb}
+
+\newtheorem{lemma}{Lemma}[section]
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+\title{Model-Checking Time Warps}
+\author{}
+
+\begin{document}
+
+\maketitle
+
+\subsection{Prolegomena}
+
+% We assume given a countable set~$\LogV$ of~\emph{logic variables}.
+
+We assume given an action of the monoid of time-warp terms on logic variables,
+whose result is denoted~$\s{t}{\alpha}$.
+%
+Explicitly, we have~$\s{(t u)}{\alpha} = \s{t}{\s{u}{\alpha}}$
+and~$\s{\id}{\alpha} = \alpha$.
+
+For every time-warp term~$t$, we assume given a logic variable~$\last(t)$.
+%
+For every logic variable~$\alpha$, we assume given two logic
+variables~$\pre(\alpha)$ and~$\suc(\alpha)$.
+%
+The mappings~$(t, \alpha) \mapsto \s{t}{\alpha}$,~$\last$,~$\pre$, and~$\suc$
+are assumed to be injective.
+
+\section{The Translation}
+
+\begin{definition}
+  A~\emph{sample} a pair~$\p{t}{\alpha}$ where~$t$ is a time-warp term
+  and~$\alpha$ is a logic variable.
+  %
+  A sample set~$\Gamma$ is~\emph{saturated} when~$p \in \Delta$
+  and~$p \leadsto q$ implies~$q \in \Delta$, with~$\leadsto$ the relation
+  between samples defined as follows.
+  %
+  \begin{align}
+    \p{t}{\alpha}
+    & \leadsto
+    \p{\id}{\alpha}
+    \\
+    \p{tu}{\alpha}
+    & \leadsto
+    \p{u}{\alpha},
+    \p{t}{\s{u}{\alpha}}
+    \\
+    \p{\ro{t}}{\alpha}
+    & \leadsto
+    \p{t}{\alpha},
+    \p{\ro{t}}{\last(\ro{t})}
+    \\
+    \p{\rr{t}}{\alpha}
+    & \leadsto
+    \p{t}{\s{\rr{t}}{\alpha}},
+    \p{t}{\suc(\s{\rr{t}}{\alpha})},
+    \p{\rr{t}}{\last(\rr{t})}
+    \\
+    \p{\rl{t}}{\alpha}
+    & \leadsto
+    \p{t}{\s{\rl{t}}{\alpha}},
+    \p{t}{\pre(\s{\rl{t}}{\alpha})},
+    \p{\rl{t}}{\last(\rl{t})}
+    \\
+    \p{t}{\suc(\alpha)}, \p{t}{\pre(\alpha)}
+    & \leadsto
+    \p{t}{\alpha}
+    \\
+    \p{t}{\last(u)}
+    & \leadsto
+    \p{u}{\last(u)}
+  \end{align}
+\end{definition}
+
+\begin{definition}
+  The~\emph{support} of a sample set~$\Delta$, denoted~$|\Delta|$, is the set of
+  logic variables
+  \[
+    |\Delta|
+    \defeq
+    \{ \s{t}{\alpha} \mid \p{t}{\alpha} \in \Delta \}.
+  \]
+\end{definition}
+
+\setcounter{equation}{-1}
+
+Let~$\Delta$ be a saturated sample set.
+
+\begin{definition}
+  A~\emph{$\Delta$-diagram} is a map~$\sigma : |\Delta| \to \omega^+$ satisfying
+  the following conditions.
+  %
+  \begin{align}
+    \forall \p{t}{\alpha},\p{t}{\beta} \in \Delta
+    &, ~
+    \sigma(\alpha) \le \sigma(\beta) \Rightarrow \sigma(\s{t}{\alpha}) \le
+    \sigma(\s{t}{\beta})
+    \\
+    \forall \p{t}{\alpha} \in \Delta
+    &, ~
+    \sigma(\alpha) = 0 \Rightarrow \sigma(\s{t}{\alpha}) = 0
+    \\
+    \forall \p{\id}{\pre(\alpha)} \in \Delta
+    &, ~
+    \sigma(\pre(\alpha)) = \sigma(\alpha) \ominus 1
+    \\
+    \forall \p{\id}{\suc(\alpha)} \in \Delta
+    &, ~
+    \sigma(\suc(\alpha)) = \sigma(\alpha) \oplus 1
+    \\
+    \forall \p{\id}{\last(t)}, \p{t}{\alpha} \in \Delta
+    &, ~
+    \sigma(\last(t)) \le \sigma(\alpha)
+    \Rightarrow
+    \sigma(\s{t}{\alpha}) = \sigma(\s{t}{\last(t)})
+    \\
+    \forall \p{\id}{\last(t)}, \p{t}{\alpha} \in \Delta
+    &, ~
+    \sigma(\alpha) =\omega\also \sigma(\s{t}{\alpha}) < \omega
+    \Rightarrow
+    \sigma(\last(t))<\omega
+    \\
+    \forall \p{t}{\last(t)}, \p{t}{\alpha} \in \Delta
+    &, ~
+    \sigma(\s{t}{\alpha}) = \sigma(\s{t}{\last(t)})
+    \Rightarrow
+    \sigma(\last(t)) \le \sigma(\alpha)
+    \\
+    \\
+    \forall \p{\top}{\alpha} \in \Delta
+    &, ~
+    \sigma(\alpha) > 0 \Rightarrow \sigma(\s{\top}{\alpha}) = \omega
+    \\
+    \forall \p{\bot}{\alpha} \in \Delta
+    &, ~
+    \sigma(\s{\bot}{\alpha}) = 0
+    \\
+    \\
+    \forall \p{\ro{t}}{\alpha} \in \Delta
+    &, ~
+    \sigma(\s{\ro{t}}{\alpha}) = 0 \orelse \sigma(\s{\ro{t}}{\alpha}) = \omega
+    \\
+    \forall \p{\ro{t}}{\alpha} \in \Delta
+    &, ~
+    \sigma(\alpha) < \omega \also \sigma(\s{\ro{t}}{\alpha}) = \omega
+    \Rightarrow
+    \sigma(\s{t}{\alpha}) = \omega
+    \\
+    \forall  \p{\id}{\last(\ro{t})}, \p{\ro{t}}{\alpha} \in \Delta
+    &, ~
+    \sigma(\alpha) = \omega \also \sigma(\s{\ro{t}}{\alpha}) = \omega
+    \Rightarrow
+    \sigma(\last(\ro{t})) < \omega
+    \\
+    \\
+    \forall \p{\rr{t}}{\alpha}, \p{t}{\s{\rr{t}}{\alpha}} \in \Delta
+    &, ~
+    \sigma(\s{t}{\s{\rr{t}}{\alpha}}) \le \sigma(\alpha)
+    \\
+    \forall \p{\rr{t}}{\alpha}, \p{t}{\suc(\s{\rr{t}}{\alpha} )}\in \Delta
+    &, ~
+    0<\sigma(\alpha) < \omega \also \sigma(\s{\rr{t}}{\alpha}) < \omega
+    \Rightarrow
+    \sigma(\alpha) < \sigma(\s{t}{{\suc(\s{\rr{t}}{\alpha)}}})
+    \\
+     \forall \p{t}{\last(\rr{t})}, \p{t}{\alpha}\in \Delta
+    &, ~
+    \sigma(\last(\rr{t})) = \omega \also \sigma(\alpha) < \omega
+    \Rightarrow
+    \sigma(t\cdot \last(\rr{t})) = \omega \also \sigma(\s{t}{\alpha}) < \omega
+    \\
+    \\
+    \forall \p{\rl{t}}{\alpha}, \p{t}{\s{\rl{t}}{\alpha}} \in \Delta
+    &, ~
+    \sigma(\s{\rl{t}}{\alpha}) < \omega
+    \Rightarrow
+    \sigma(\alpha)  \le \sigma(\s{t}{\s{\rl{t}}{\alpha}})
+    \\
+    \forall \p{\rl{t}}{\alpha} \in \Delta
+    &, ~
+    \sigma(\s{\rl{t}}{\alpha}) = 0
+    \Rightarrow
+    \sigma(\alpha) = 0
+    \\
+    \forall \p{\rl{t}}{\alpha}, \p{t}{\pre(\s{\rl{t}}{\alpha} )}\in \Delta
+    &, ~
+    0<\sigma(\alpha) < \omega \also \sigma(\s{\rl{t}}{\alpha}) < \omega
+    \Rightarrow
+    \sigma(\s{t}{{\pre(\s{\rl{t}}{\alpha)}}})<  \sigma(\alpha)
+    \\
+    \forall \p{\rl{t}}{\alpha}, \p{t}{\s{\rl{t}}{\alpha}} \in \Delta
+    &, ~
+    \sigma(\alpha) < \omega \also \sigma(\s{\rl{t}}{\alpha}) = \omega
+    \Rightarrow
+    \sigma(\s{t}{\s{\rl{t}}{\alpha}})  < \sigma(\alpha)
+    \\
+      \forall \p{t}{\last(\rl{t})}, \p{t}{\alpha}\in \Delta
+    &, ~
+    \sigma(\last(\rl{t})) = \omega \also \sigma(\alpha) < \omega
+    \Rightarrow
+    \sigma(t\cdot \last(\rl{t})) = \omega \also \sigma(\s{t}{\alpha}) < \omega
+  \end{align}
+\end{definition}
+
+\begin{lemma}
+  Any~$\Delta$-diagram~$\delta$ satisfies the following properties.
+  %
+  \begin{align}
+    \forall \p{\ro{t}}{\alpha} \in \Delta
+    &, ~
+    \sigma(\alpha) < \omega \also \sigma(\s{\ro{t}}{\alpha}) < \omega
+    \Rightarrow
+    \sigma(\s{\ro{t}}{\alpha}) = 0  \also \sigma(\s{t}{\alpha}) < \omega
+  \end{align}
+\end{lemma}
+
+\end{document}

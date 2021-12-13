@@ -1,0 +1,3 @@
+(library
+  (name twmclib)
+  (libraries z3 pprint zarith))
