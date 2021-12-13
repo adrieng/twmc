@@ -1,7 +1,7 @@
 module Make(X : Sigs.HashedOrderedType)(L : Logic.S) : sig
   type t
 
-  val make : L.problem -> t
+  val make : L.query -> t
 
   val fresh_point : ?name:string -> t -> L.V.t
 

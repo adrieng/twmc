@@ -7,9 +7,13 @@ module type S = sig
   (** First-order terms. *)
   type term
 
-  val int : int -> term
+  val lit : int -> term
 
   val var : var -> term
+
+  val add : term -> term -> term
+
+  val ( + ) : term -> term -> term
 
   (** Propositions. *)
   type prop
@@ -26,26 +30,31 @@ module type S = sig
 
   val ( ==> ) : prop -> prop -> prop
 
+  val not_ : prop -> prop
+
   val and_ : prop list -> prop
 
   val or_ : prop list -> prop
 
   val entails : prop list -> prop -> prop
 
-  (** Problems are top-level objects in which formulae are asserted and
-     variables are created. *)
-  type problem
+  (** Queries are top-level objects in which formulae are asserted and variables
+     are created. *)
+  type query
 
-  (** Create a new problem. *)
-  val make : unit -> problem
+  (** Pretty-print a query. *)
+  val pp : query -> PPrint.document
 
-  (** Create a fresh variable in the given problem. *)
-  val fresh : ?name:string -> problem -> var
+  (** Create a new query. *)
+  val make : unit -> query
 
-  (** Assert a formula in a logical problem, i.e., assume that it ought to be
+  (** Create a fresh variable in the given query. *)
+  val fresh : ?name:string -> query -> var
+
+  (** Assert a formula in a logical query, i.e., assume that it ought to be
      satisfiable. *)
-  val assert_ : problem -> prop -> unit
+  val assert_ : query -> prop -> unit
 
-  (** Append a comment to a logical problem. *)
-  val comment : problem -> string -> unit
+  (** Append a comment to a logical query. *)
+  val comment : query -> string -> unit
 end

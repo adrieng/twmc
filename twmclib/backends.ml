@@ -6,16 +6,23 @@ module SMTLIB = struct
   type term =
     | Int of int
     | Var of V.t
+    | Add of term * term
 
-  let int i =
+  let lit i =
     Int i
 
   let var v =
     Var v
 
+  let add x y =
+    Add (x, y)
+
+  let ( + ) =
+    add
+
   type prop =
     | Cmp of [`Eq | `Le | `Lt] * term * term
-    | Prop of [`And | `Or | `Entails] * prop list
+    | Prop of [`And | `Or | `Entails | `Not] * prop list
 
   let ( = ) f g =
     Cmp (`Eq, f, g)
@@ -31,6 +38,9 @@ module SMTLIB = struct
 
   let or_ fs =
     Prop (`Or, fs)
+
+  let not_ f =
+    Prop (`Not, [f])
 
   let entails fs g =
     Prop (`Entails, fs @ [g])
@@ -48,7 +58,7 @@ module SMTLIB = struct
     | Ass of prop
     | Comment of string
 
-  type problem =
+  type query =
     {
       mutable contents : phrase list;
       mutable variables : V.t list;
@@ -71,7 +81,7 @@ module SMTLIB = struct
     prb.variables <- x :: prb.variables;
     x
 
-  let to_channel oc prb =
+  let pp query =
     let open PPrint in
 
     let pp_sexp op f args =
@@ -87,6 +97,8 @@ module SMTLIB = struct
          !^ (string_of_int i)
       | Var x ->
          pp_var x
+      | Add (x, y) ->
+         group (!^ "(+ " ^/^ pp_term x ^//^ pp_term y ^/^ !^ ")")
 
     and pp_prop f =
       match f with
@@ -104,6 +116,7 @@ module SMTLIB = struct
            | `And -> "and"
            | `Or -> "or"
            | `Entails -> "=>"
+           | `Not -> "not"
          in
          pp_sexp s pp_prop fs
 
@@ -119,20 +132,22 @@ module SMTLIB = struct
     let variables =
       hardlines
         (fun x -> !^ "(declare-const " ^^ pp_var x ^^ !^ " Int)")
-        prb.variables
+        query.variables
     in
-    let contents = hardlines pp_phrase (List.rev prb.contents) in
-    ToChannel.pretty 0.9 80 oc @@
-      concat
-        [
-          !^ "(set-logic QF_LIA)\n";
-          variables;
-          contents;
-          !^ "; Infrastructure\n";
-          !^ "(check-sat)\n";
-          !^ "(get-model)\n";
-          !^ "(exit)\n";
-        ]
+    let contents = hardlines pp_phrase (List.rev query.contents) in
+    concat
+      [
+        !^ "(set-logic QF_LIA)\n";
+        variables;
+        contents;
+        !^ "; Infrastructure\n";
+        !^ "(check-sat)\n";
+        !^ "(get-model)\n";
+        !^ "(exit)\n";
+      ]
+
+  let to_channel oc query =
+    PPrint.ToChannel.pretty 0.9 80 oc (pp query)
 end
 
 module Z3 = struct
@@ -154,11 +169,17 @@ module Z3 = struct
 
   type term = Z3.Expr.expr
 
-  let int i =
+  let lit i =
     Z3.Expr.mk_numeral_int !cx i (Z3.Arithmetic.Integer.mk_sort !cx)
 
   let var v =
     Z3.Expr.expr_of_ast v
+
+  let add x y =
+    Z3.Arithmetic.mk_add !cx [x; y]
+
+  let ( + ) =
+    add
 
   type prop = Z3.Expr.expr
 
@@ -177,6 +198,9 @@ module Z3 = struct
   let or_ fs =
     Z3.Boolean.mk_or !cx fs
 
+  let not_ f =
+    Z3.Boolean.mk_not !cx f
+
   let entails fs g =
     Z3.Boolean.mk_implies !cx (and_ fs) g
 
@@ -189,7 +213,7 @@ module Z3 = struct
   let ( ==> ) f g =
     Z3.Boolean.mk_implies !cx f g
 
-  type problem =
+  type query =
     {
       mutable variables : var list;
       solver : Z3.Solver.solver;
@@ -201,14 +225,14 @@ module Z3 = struct
       solver = Z3.Solver.mk_solver_s !cx "QF_LIA";
     }
 
-  let fresh ?(name = "") prb =
+  let fresh ?(name = "") query =
     let int_s = Z3.Arithmetic.Integer.mk_sort !cx in
     let x = Z3.Expr.(ast_of_expr @@ mk_fresh_const !cx name int_s) in
-    prb.variables <- x :: prb.variables;
+    query.variables <- x :: query.variables;
     x
 
-  let assert_ prb f =
-    Z3.Solver.add prb.solver [f]
+  let assert_ query f =
+    Z3.Solver.add query.solver [f]
 
   let comment _ s =
     Z3.Log.append s
@@ -216,11 +240,14 @@ module Z3 = struct
   let () =
     ignore @@ Z3.Log.open_ "/tmp/z3.log"
 
-  let solve prb =
-    Z3.Solver.check prb.solver []
+  let pp query =
+    PPrint.(!^ (Z3.Solver.to_string query.solver))
 
-  let model prb =
-    match Z3.Solver.get_model prb.solver with
+  let solve query =
+    Z3.Solver.check query.solver []
+
+  let model query =
+    match Z3.Solver.get_model query.solver with
     | None ->
        None
     | Some m ->

@@ -1,4 +1,4 @@
-let ratio = 0.9
+let ratio = 1.
 
 let width = 80
 
@@ -10,5 +10,8 @@ let to_string d =
   PPrint.ToBuffer.pretty ratio width buf d;
   Bytes.to_string @@ Buffer.to_bytes buf
 
-let to_fmt to_doc fmt x =
-  Format.fprintf fmt "%s@?" (x |> to_doc |> to_string)
+let fmt ff d =
+  PPrint.ToFormatter.pretty ratio width ff d
+
+let to_fmt to_doc ff x =
+  Format.fprintf ff "%a" fmt (to_doc x)

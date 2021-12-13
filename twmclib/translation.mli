@@ -3,7 +3,7 @@ module Make(L : Logic.S) : sig
 
   type instance =
     {
-      problem : L.problem;
+      problem : L.query;
       (** Logical problem equivalent to some time-warp inequality. *)
       zero : L.var;
       (** First-order variable representing 0. *)

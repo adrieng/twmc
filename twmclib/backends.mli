@@ -1,7 +1,7 @@
 module SMTLIB : sig
   include Logic.S
 
-  val to_channel : out_channel -> problem -> unit
+  val to_channel : out_channel -> query -> unit
 end
 
 module Z3 : sig
@@ -9,7 +9,7 @@ module Z3 : sig
 
   val flush : unit -> unit
 
-  val solve : problem -> Z3.Solver.status
+  val solve : query -> Z3.Solver.status
 
-  val model : problem -> (var -> int) option
+  val model : query -> (var -> int) option
 end

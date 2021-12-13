@@ -3,7 +3,7 @@ module Make(L : Logic.S) = struct
 
   type instance =
     {
-      problem : L.problem;
+      problem : L.query;
       zero : L.var;
       omega : L.var;
       test : L.var;
@@ -62,7 +62,7 @@ module Make(L : Logic.S) = struct
     com "Relation";
     ass @@ translate_rel rel p;
     com "Bounds";
-    ass @@ L.(var z = int 0);
+    ass @@ L.(var z = lit 0);
     S.iter_points assert_bounds s;
     com "Monotonicity";
     S.iter_sample_pairs assert_monotonicity s;

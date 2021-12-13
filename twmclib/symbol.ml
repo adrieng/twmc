@@ -2,7 +2,8 @@ module type S = sig
   type t
   val compare : t -> t -> int
   val equal : t -> t -> bool
-  val hash : t -> int
+  val hash : t Sigs.hasher
+  val hash_fold_t : t Sigs.hashfolder
   val to_string : t -> string
   val fresh : ?name:string -> unit -> t
 end
@@ -23,6 +24,9 @@ module Make() = struct
 
   let hash x =
     Hashtbl.hash x.id
+
+  let hash_fold_t state x =
+    Ppx_hash_lib.Std.Hash.fold_int state x.id
 
   let to_string x =
     x.name ^ if x.first then "" else "_" ^ string_of_int x.id

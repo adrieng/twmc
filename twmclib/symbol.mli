@@ -9,9 +9,13 @@ module type S = sig
   val equal : t -> t -> bool
 
   (** Symbols support constant-time hashing. *)
-  val hash : t -> int
+  val hash : t Sigs.hasher
 
-  (** Symbols can be printed to integers in an injective (w.r.t. equal) way. *)
+  (** For compatibility with ppx_hash. *)
+  val hash_fold_t : t Sigs.hashfolder
+
+  (** Symbols can be printed to strings in an injective (w.r.t. [equal])
+     way. *)
   val to_string : t -> string
 
   (** [fresh ?name] generates a fresh new symbol. This symbol is guaranteed to

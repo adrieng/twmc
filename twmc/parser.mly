@@ -1,6 +1,6 @@
 (* -*- mode: tuareg -*- *)
 %{
-  open Twmclib.Warp
+  open Twmclib.Term
 
   let var =
     let module H = Hashtbl.Make(Twmclib.Sigs.String) in
@@ -15,19 +15,26 @@
        y
 %}
 
-%start<Twmclib.Warp.rel> problem
+%start<Twmclib.Problem.t> problem
 
 (* Tokens *)
 
-%token BOT TOP STAR
+%token<string> IDENT
+
+%token BOT TOP ID
+%token STAR SLASH ASLASH MEET JOIN
+%token EO ER EL
 %token LPAREN RPAREN
-%token<string> ID
-%token LE
+
+%token LE EQ
+
 %token EOF
 
 (* Priorities *)
 
 %left STAR
+%right SLASH ASLASH
+%left MEET JOIN
 
 %%
 
@@ -37,20 +44,30 @@
 | LPAREN x = X RPAREN { x }
 
 var:
-| x = ID { var x }
+| x = IDENT { var x }
 
-simple_atom:
+simple_term:
 | x = var { Var x }
+| ID { Id }
 | TOP { Top }
 | BOT { Bot }
-| LPAREN t = atom RPAREN { t }
+| LPAREN t = term RPAREN { t }
 
-atom:
-| t = simple_atom { t }
-| t = atom STAR u = atom { Star (t, u) }
+term:
+| t = simple_term { t }
+| t = term STAR u = term { Comp (u, t) }
+| t = simple_term u = term %prec STAR { Comp (t, u) }
+| t = term SLASH u = term { Over (t, u) }
+| t = term ASLASH u = term { Under (t, u) }
+| t = term MEET u = term { Meet (t, u) }
+| t = term JOIN u = term { Join (t, u) }
+| t = simple_term EO { RedO t }
+| t = simple_term EL { RedL t }
+| t = simple_term ER { RedR t }
 
 rel:
-| t = atom LE u = atom { Le (t, u) }
+| t = term LE u = term { Twmclib.Problem.Le (t, u) }
+| t = term EQ u = term { Twmclib.Problem.Eq (t, u) }
 
 problem:
 | r = rel EOF { r }

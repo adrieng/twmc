@@ -5,7 +5,7 @@ module Make(X : Sigs.HashedOrderedType)(L : Logic.S) = struct
 
   type t =
     {
-      prb : L.problem;
+      prb : L.query;
       tab : L.V.t HP.t HX.t;
       mutable all : SP.t;
     }
