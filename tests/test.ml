@@ -1,29 +1,46 @@
 open Twmclib
 
-let x_id = Warp.V.fresh ~name:"x" ()
-let x = Warp.Var x_id
-
-let result, result_cex =
-  let pp = Print.to_fmt Result.print in
-  Alcotest.testable pp (Result.equal ~consider_counterexamples:false),
-  Alcotest.testable pp (Result.equal ~consider_counterexamples:true)
+let result =
+  let pp fmt r =
+    match r with
+    | `Valid ->
+       Format.fprintf fmt "valid"
+    | `Invalid cex ->
+       Format.fprintf fmt "invalid: %a" (Print.to_fmt Counterexample.pp) cex
+  and equal r1 r2 =
+    match r1, r2 with
+    | `Valid, `Valid | `Invalid _, `Invalid _ -> true
+    | _ -> false
+  in
+  Alcotest.testable pp equal
 
 let test_le () =
   let cases =
-    let open Result in
-    let open Warp in
-    let open Infix in
-    [
-      x, x, Valid;
-      x * x, x * x, Valid;
+    let open Term in
+
+    let x_id = V.fresh ~name:"x" () in
+    let x = Var x_id in
+
+    Problem.[
+        Eq (x, x), true;
+        Eq (Comp (x, x), Comp (x, x)), true;
     ]
   in
   List.map
-    (fun (s, t, res) ->
-      let rel = Warp.Le (s, t) in
-      let repr = Print.to_string (Warp.Print.rel rel) in
-      Alcotest.test_case repr `Quick
-        (fun () -> Alcotest.check result repr Result.(solve rel) res))
+    (fun (prob, is_valid) ->
+      let repr =
+        Printf.sprintf "%s (%svalid)"
+          (Print.to_string @@ Problem.pp prob)
+          (if is_valid then "" else "in")
+      in
+      Alcotest.test_case
+        repr
+        `Quick
+        (fun () -> Alcotest.check
+                     result
+                     repr
+                     (Problem.to_solution prob)
+                     (if is_valid then `Valid else `Invalid Counterexample.dummy)))
     cases;;
 
 let () =

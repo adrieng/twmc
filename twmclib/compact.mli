@@ -10,7 +10,7 @@ val make : int array -> t
 val eval : t -> int -> int
 
 (** Pretty-print a compact time warp. *)
-val print : t -> PPrint.document
+val pp : t -> PPrint.document
 
 (** Test compact time warps for equality. *)
 val equal : t -> t -> bool

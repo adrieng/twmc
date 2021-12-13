@@ -76,7 +76,7 @@ let _ =
          Printf.printf "VALID\n"
       | `Invalid cm ->
          Print.print
-           PPrint.(prefix 2 1 (!^ "INVALID at:") (Counterexample.print cm))
+           PPrint.(prefix 2 1 (!^ "INVALID at:") (Counterexample.pp cm))
     )
     (Printf.sprintf
        "Usage: %s [OPTIONS] ineq1 ... ineqN\nOptions:"

@@ -5,7 +5,7 @@ type t =
     last : int;
   }
 
-let print { u; _ } =
+let pp { u; _ } =
   let open PPrint in
   let int i = !^ (string_of_int i) in
   group (separate_map (break 1) int (Array.to_list u) ^^ !^ "(0)")

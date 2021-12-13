@@ -4,9 +4,9 @@ type t =
     point : int;
   }
 
-let print { valuation; point; } =
+let pp { valuation; point; } =
   let open PPrint in
-  let binding (x, t) = PPrint.prefix 2 1 (Warp.Print.id x) (Compact.print t) in
+  let binding (x, t) = PPrint.prefix 2 1 (Warp.Print.id x) (Compact.pp t) in
   prefix 2 1 (!^ "values:")
     (surround_separate_map 2 1
        (!^ "[]") (!^ "[") (!^ ",") (!^ "]") binding valuation)

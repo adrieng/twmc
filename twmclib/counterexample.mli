@@ -10,8 +10,8 @@ type t =
        specified as per the valuation. *)
   }
 
-(** Display a counterexample. *)
-val print : t -> PPrint.document
+(** Print a counterexample as a PPrint.document. *)
+val pp : t -> PPrint.document
 
 (** Test counterexamples for equality. *)
 val equal : t -> t -> bool
