@@ -3,8 +3,8 @@
 ## What
 
 This is a work-in-progress implementation of the decision procedure described in
-the paper [https://arxiv.org/abs/2106.06205](Time Warps, from Algebra to
-Algorithms).
+the paper [Time Warps, from Algebra to
+Algorithms](https://arxiv.org/abs/2106.06205).
 
 ## How
 
