@@ -8,7 +8,7 @@ type t =
 
 (** {2 Pretty-printing} *)
 
-val pp : t Sigs.printer
+val pp : t Print.printer
 
 (** {2 Solvers} *)
 

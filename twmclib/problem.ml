@@ -85,7 +85,7 @@ let to_solution
   let solve query =
     match Backends.Z3.solve query with
     | Z3.Solver.UNKNOWN ->
-       let r_s = Print.to_string (pp pb) in
+       let r_s = Print.PPrint.to_string (pp pb) in
        Printf.eprintf
          "%s: unknown result, please send to <guatto@irif.fr>\n"
          r_s;
@@ -95,7 +95,7 @@ let to_solution
     | Z3.Solver.SATISFIABLE ->
        begin match Backends.Z3.model query with
        | None ->
-          let r_s = Print.to_string (pp pb) in
+          let r_s = Print.PPrint.to_string (pp pb) in
           Printf.eprintf
             "%s: no model, please send to <guatto@irif.fr>\n"
             r_s;

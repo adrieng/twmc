@@ -35,5 +35,5 @@ val hash_fold_t : t Sigs.hashfolder
 
 (** {2 Printing} *)
 
-include Sigs.PrintableType with type t := t
-val pp_var : V.t Sigs.printer
+include Print.PrintableType with type t := t
+val pp_var : V.t Print.printer

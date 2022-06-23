@@ -6,7 +6,8 @@ let result =
     | `Valid ->
        Format.fprintf fmt "valid"
     | `Invalid cex ->
-       Format.fprintf fmt "invalid: %a" (Print.to_fmt Counterexample.pp) cex
+       Format.fprintf fmt "invalid: %a"
+         (Print.PPrint.to_fmt Counterexample.pp) cex
   and equal r1 r2 =
     match r1, r2 with
     | `Valid, `Valid | `Invalid _, `Invalid _ -> true
@@ -15,7 +16,7 @@ let result =
   Alcotest.testable pp equal
 
 let test_case_of_problem expected prob =
-  let repr = Print.to_string @@ Problem.pp prob in
+  let repr = Print.PPrint.to_string @@ Problem.pp prob in
   Alcotest.test_case
     repr
     `Quick

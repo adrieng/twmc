@@ -34,3 +34,13 @@ let eval p i =
 
 let equal p1 p2 =
   p1.last = p2.last && Array.for_all2 ( = ) p1.u p2.u
+
+let ( <= ) p1 p2 =
+  p1.last <= p2.last && p1.len = p2.len &&
+    let rec loop i s1 s2 =
+      i >= p1.len
+      || let a = s1 + p1.u.(i) in
+         let b = s2 + p2.u.(i) in
+         a <= b && loop (i + 1) s1 s2
+    in
+    loop 0 0 0

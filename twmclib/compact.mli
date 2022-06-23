@@ -14,3 +14,6 @@ val pp : t -> PPrint.document
 
 (** Test compact time warps for equality. *)
 val equal : t -> t -> bool
+
+(** Test compact time warps for the pointwise ordering. *)
+val ( <= ) : t -> t -> bool

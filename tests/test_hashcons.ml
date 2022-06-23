@@ -30,7 +30,7 @@ end
 
 module T = Hashcons.Term(MS)
 let term, different_term =
-  let ff = Print.to_fmt T.pp in
+  let ff = Print.PPrint.to_fmt T.pp in
   Alcotest.testable ff T.equal,
   Alcotest.testable ff (fun x y -> not (T.equal x y))
 

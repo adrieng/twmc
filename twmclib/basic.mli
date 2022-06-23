@@ -14,11 +14,11 @@ type t =
   | Comp of t * t
   (** Composition, i.e., [Star (t, u)] maps [n] to [t (u n)]. *)
   | RedO of t
-  (** O-residual, i.e., [RedO t] is top\[t]. *)
+  (** O-residual, i.e., [RedO t] is top \ [t]. *)
   | RedR of t
-  (** R-residual, i.e., [RedR t] is [t]\id. *)
+  (** R-residual, i.e., [RedR t] is [t] \ id. *)
   | RedL of t
-  (** L-residual, i.e., [RedL t] is id/[t]. *)
+  (** L-residual, i.e., [RedL t] is id / [t]. *)
 
 include Sigs.HashedOrderedType with type t := t
 
@@ -26,7 +26,7 @@ val hash_fold_t : t Sigs.hashfolder
 
 (** Printing. *)
 
-include Sigs.PrintableType with type t := t
+include Print.PrintableType with type t := t
 
 module Infix : sig
   (** Creates a fresh variable with the given name. *)

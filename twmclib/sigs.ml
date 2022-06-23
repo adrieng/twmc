@@ -4,13 +4,6 @@ module type HashedOrderedType = sig
   include Map.OrderedType with type t := t
 end
 
-type 'a printer = 'a -> PPrint.document
-
-module type PrintableType = sig
-  type t
-  val pp : t printer
-end
-
 module String = struct
   type t = string
   let hash (x : t) =
@@ -23,12 +16,25 @@ module String = struct
     x = y
 end
 
-type 'a cmp = 'a -> 'a -> int
-
 type 'a hasher = 'a -> int
 
 type 'a hashfolder =
   Ppx_hash_lib.Std.Hash.state -> 'a -> Ppx_hash_lib.Std.Hash.state
+
+type 'a cmp = 'a -> 'a -> int
+
+module Compare = struct
+  let andthen : 'a cmp -> int Lazy.t -> 'a cmp =
+    fun cmp res x y -> let r = cmp x y in
+                       if r = 0 then Lazy.force res else r
+
+  let int : int cmp = Stdlib.compare
+
+  let pair : 'a cmp -> 'b cmp -> ('a * 'b) cmp =
+    fun cmp1 cmp2 (x1, y1) (x2, y2) ->
+    let r = cmp1 x1 x2 in
+    if r <> 0 then r else cmp2 y1 y2
+end
 
 module type Signature = sig
   type 'a t
@@ -36,4 +42,14 @@ module type Signature = sig
   val map : ('a -> 'b) -> 'a t -> 'b t
   val compare : 'a cmp -> 'a t cmp
   val hash_fold : 'a hashfolder -> 'a t hashfolder
+end
+
+module Int = struct
+  let mod_b1 x y = succ (pred x mod y)
+
+  let div_b1 x y = pred x / y
+
+  let rec gcd a b = if b = 0 then a else gcd b (a mod b)
+
+  let lcm a b = (a * b) / gcd a b
 end
