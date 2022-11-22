@@ -1,34 +1,24 @@
 type t =
   | Var of (Term.V.t [@compare Term.V.compare] [@equal Term.V.equal])
   | Id
-  | Top
-  | Bot
   | Comp of t * t
-  | RedO of t
-  | RedR of t
-  | RedL of t
+  | Neg of t
   [@@deriving eq, ord, hash]
 
 let rec pp t =
   let open PPrint in
-  let suff t k = pp t ^^ !^ ("^" ^ k) in
   match t with
   | Var x ->
      Term.pp_var x
   | Id ->
      !^ "id"
-  | Top ->
-     !^ "top"
-  | Bot ->
-     !^ "bot"
   | Comp (t, u) ->
      parens @@ group @@ pp t ^//^ pp u
-  | RedO t ->
-     suff t "o"
-  | RedR t ->
-     suff t "r"
-  | RedL t ->
-     suff t "l"
+  | Neg t ->
+     begin match t with
+     | Comp _ -> parens (pp t)
+     | _ -> pp t
+     end ^^ !^ "'"
 
 module Infix = struct
   let v name = Var (Term.V.fresh ~name ())

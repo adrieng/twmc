@@ -1,6 +1,7 @@
 (executable
   (name twmc)
-  (libraries twmclib menhirLib))
+  (libraries twmclib menhirLib)
+  (promote (until-clean)))
 
 (menhir (modules parser) (infer true))
 (ocamllex lexer)

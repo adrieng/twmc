@@ -38,27 +38,25 @@ let rec saturate a set =
     | Sample.SVar _ | Sample.SLast _ ->
        set
     | Sample.SEval (t, a) ->
+       (* Rewrite rule 1 from paper. *)
        let set = extend a set in
-       let set = saturate Sample.(last t) set in
+       (* Rewrite rule 3 from paper. *)
+       let set = saturate Sample.(eval t (last t)) set in
        begin match t with
-       | Basic.Var _ | Basic.Id | Basic.Top | Basic.Bot ->
+       | Basic.Var _ | Basic.Id ->
           set
        | Basic.Comp (t, u) ->
+          (* Rewrite rule 4 from paper. *)
           set
           |> saturate Sample.(eval t (eval u a))
-       | Basic.RedO t ->
+       | Basic.Neg t ->
+          (* Rewrite rule 5 from paper. *)
           set
-          |> saturate Sample.(eval t a)
-       | Basic.RedR t ->
-          set
-          |> saturate Sample.(eval t @@ eval (Basic.RedR t) a)
-          |> saturate Sample.(eval t @@ succ @@ eval (Basic.RedR t) a)
-       | Basic.RedL t ->
-          set
-          |> saturate Sample.(eval t @@ eval (Basic.RedL t) a)
-          |> saturate Sample.(eval t @@ pred @@ eval (Basic.RedL t) a)
+          |> saturate Sample.(eval t @@ eval (Neg t) a)
+          |> saturate Sample.(eval t @@ succ @@ eval (Neg t) a)
        end
-    | Sample.SPred a | Sample.SSucc a ->
+    | Sample.SSucc a ->
+       (* Rewrite rule 2 from paper. *)
        extend a set
 
 let fold_all f set ini =

@@ -15,7 +15,6 @@ val pp : t -> PPrint.document
 type 'a sign =
   | SVar of V.t
   | SEval of Basic.t * 'a
-  | SPred of 'a
   | SSucc of 'a
   | SLast of Basic.t
 
@@ -30,8 +29,6 @@ val make : t sign -> t
 val var : V.t -> t
 
 val eval : Basic.t -> t -> t
-
-val pred : t -> t
 
 val succ : t -> t
 

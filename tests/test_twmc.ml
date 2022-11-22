@@ -47,19 +47,15 @@ let test_valid () =
       Le (Comp (Over (x, y), y), x);
       Le (x, Under (Comp (x, y), y));
       Le (y, Under (x, Comp (x, y)));
-      Le (Bot, x);
       Le (Meet (x, y), y);
       Le (Meet (x, y), x);
-      Le (x, Top);
       Le (x, Join (x, y));
       Le (y, Join (x, y));
 
       (* Lattice properties. *)
-      Eq (Meet (x, Top), x);
       Eq (Meet (x, Meet (y, z)), Meet (Meet (x, y), z));
       Eq (Meet (x, y), Meet (y, x));
       Eq (Meet (x, x), x);
-      Eq (Join (x, Bot), x);
       Eq (Join (x, Join (y, z)), Join (Join (x, y), z));
       Eq (Join (x, y), Join (y, x));
       Eq (Join (x, x), x);

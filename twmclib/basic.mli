@@ -7,18 +7,9 @@ type t =
   (** Time warp variables. *)
   | Id
   (** Identity time warp. *)
-  | Top
-  (** Highest time warp. *)
-  | Bot
-  (** Lowest time warp. *)
   | Comp of t * t
-  (** Composition, i.e., [Star (t, u)] maps [n] to [t (u n)]. *)
-  | RedO of t
-  (** O-residual, i.e., [RedO t] is top \ [t]. *)
-  | RedR of t
-  (** R-residual, i.e., [RedR t] is [t] \ id. *)
-  | RedL of t
-  (** L-residual, i.e., [RedL t] is id / [t]. *)
+  (** Negation, i.e., [Neg t] is t \ predecessor. *)
+  | Neg of t
 
 include Sigs.HashedOrderedType with type t := t
 

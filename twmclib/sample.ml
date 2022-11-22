@@ -4,7 +4,6 @@ module S = struct
   type 'a t =
     | SVar of (V.t [@compare V.compare] [@equal V.equal])
     | SEval of Basic.t * 'a
-    | SPred of 'a
     | SSucc of 'a
     | SLast of Basic.t
     [@@deriving ord, hash]
@@ -17,8 +16,6 @@ module S = struct
        SVar v
     | SEval (t, a) ->
        SEval (t, f a)
-    | SPred a ->
-       SPred (f a)
     | SSucc a ->
        SSucc (f a)
     | SLast t ->
@@ -31,8 +28,6 @@ module S = struct
        !^ ("'k" ^ V.to_string v)
     | SEval (t, a) ->
        group (Basic.pp t ^//^ brackets (pp_term a))
-    | SPred a ->
-       group (!^ "pred" ^//^ pp_term a)
     | SSucc a ->
        group (!^ "succ" ^//^ pp_term a)
     | SLast t ->
@@ -42,7 +37,6 @@ end
 type 'a sign = 'a S.t =
   | SVar of V.t
   | SEval of Basic.t * 'a
-  | SPred of 'a
   | SSucc of 'a
   | SLast of Basic.t
 
@@ -52,7 +46,6 @@ include T
 
 let var v = make (SVar v)
 let eval t a = make (SEval (t, a))
-let pred a = make (SPred a)
 let succ a = make (SSucc a)
 let last t = make (SLast t)
 

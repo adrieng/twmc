@@ -47,7 +47,7 @@ let to_logic
   on_residual_simple_term s;
   let s = Normalize.canonicalize s in
   on_canonical_term s;
-  let tss = Normalize.to_basic s in
+  let tss = Normalize.to_cnf s in
   List.iter on_basic_positive_terms tss;
   (* Now, for each disjunction of basic terms, we build a saturated sample
      set and a sample variable. *)

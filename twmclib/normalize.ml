@@ -2,7 +2,7 @@ open Term
 
 let rec eliminate_binary_residuals t =
   match t with
-  | Var _ | Id | Top | Bot ->
+  | Var _ | Id ->
      t
   | Comp (t, u) ->
      let t = eliminate_binary_residuals t in
@@ -11,17 +11,11 @@ let rec eliminate_binary_residuals t =
   | Under (t, u) ->
      let t = eliminate_binary_residuals t in
      let u = eliminate_binary_residuals u in
-     Join (Comp (RedR t, u), Join (RedR (Comp (Top, t)), RedO u))
+     Neg (Comp (Neg u, t))
   | Over (t, u) ->
      let t = eliminate_binary_residuals t in
      let u = eliminate_binary_residuals u in
-     Join (Comp (t, RedL u), RedO (RedL t))
-  | RedO t ->
-     RedO (eliminate_binary_residuals t)
-  | RedL t ->
-     RedL (eliminate_binary_residuals t)
-  | RedR t ->
-     RedR (eliminate_binary_residuals t)
+     Neg (Comp (t, Neg u))
   | Meet (t, u) ->
      let t = eliminate_binary_residuals t in
      let u = eliminate_binary_residuals u in
@@ -30,6 +24,8 @@ let rec eliminate_binary_residuals t =
      let t = eliminate_binary_residuals t in
      let u = eliminate_binary_residuals u in
      Join (t, u)
+  | Neg t ->
+     Neg (eliminate_binary_residuals t)
 
 let rec comp t u =
   match t, u with
@@ -44,25 +40,22 @@ let rec comp t u =
   | _ ->
      Comp (t, u)
 
-let rec meet t u =
-  match t, u with
-  | Top, v | v, Top ->
-     v
-  | Bot, _ | _, Bot ->
-     Bot
-  | Join (t1, t2), u ->
-     Join (meet t1 u, meet t2 u)
-  | t, Join (u1, u2) ->
-     Join (meet t u1, meet t u2)
-  | _ ->
-     Meet (t, u)
+let meet t u =
+  Meet (t, u)
+  (* match t, u with *)
+  (* | Join (t1, t2), u -> *)
+  (*    Join (meet t1 u, meet t2 u) *)
+  (* | t, Join (u1, u2) -> *)
+  (*    Join (meet t u1, meet t u2) *)
+  (* | _ -> *)
+  (*    Meet (t, u) *)
 
-let join t u =
+let rec join t u =
   match t, u with
-  | Bot, v | v, Bot ->
-     v
-  | Top, _ | _, Top ->
-     Top
+  | Meet (t1, t2), u ->
+     Meet (join t1 u, join t2 u)
+  | t, Meet (u1, u2) ->
+     Meet (join t u1, join t u2)
   | _ ->
      Join (t, u)
 
@@ -92,36 +85,20 @@ let rec under t u =
   | _ ->
      Under (t, u)
 
-let rec redo t =
+let rec neg t =
   match t with
-  | Meet (t1, t2) ->
-     Meet (redo t1, redo t2)
-  | Join (t1, t2) ->
-     Join (redo t1, redo t2)
+  | Meet (t, u) ->
+     Join (neg t, neg u)
+  | Join (t, u) ->
+     Meet (neg t, neg u)
+  | Neg t ->
+     t
   | _ ->
-     RedO t
-
-let rec redl t =
-  match t with
-  | Meet (t1, t2) ->
-     Join (redl t1, redl t2)
-  | Join (t1, t2) ->
-     Meet (redl t1, redl t2)
-  | _ ->
-     RedL t
-
-let rec redr t =
-  match t with
-  | Meet (t1, t2) ->
-     Join (redr t1, redr t2)
-  | Join (t1, t2) ->
-     Meet (redr t1, redr t2)
-  | _ ->
-     RedR t
+     Neg t
 
 let rec canonicalize t =
   match t with
-  | Var _ | Id | Top | Bot ->
+  | Var _ | Id ->
      t
   | Comp (t, u) ->
      comp (canonicalize t) (canonicalize u)
@@ -129,23 +106,22 @@ let rec canonicalize t =
      over (canonicalize t) (canonicalize u)
   | Under (t, u) ->
      under (canonicalize t) (canonicalize u)
-  | RedO t ->
-     redo (canonicalize t)
-  | RedR t ->
-     redr (canonicalize t)
-  | RedL t ->
-     redl (canonicalize t)
   | Meet (t, u) ->
      meet (canonicalize t) (canonicalize u)
   | Join (t, u) ->
      join (canonicalize t) (canonicalize u)
+  | Neg t ->
+     neg (canonicalize t)
 
 exception Not_canonical
 
-let rec to_basic t =
-  let get bss =
-    match bss with
+let rec to_cnf t =
+  let get_atomic = function
     | [[b]] -> b
+    | _ -> raise Not_canonical
+  in
+  let get_join = function
+    | [bs] -> bs
     | _ -> raise Not_canonical
   in
   match t with
@@ -153,35 +129,18 @@ let rec to_basic t =
      [[Basic.Var s]]
   | Id ->
      [[Basic.Id]]
-  | Top ->
-     [[Basic.Top]]
-  | Bot ->
-     [[Basic.Bot]]
   | Comp (t, u) ->
-     let t = get @@ to_basic t in
-     let u = get @@ to_basic u in
+     let t = get_atomic @@ to_cnf t in
+     let u = get_atomic @@ to_cnf u in
      [[Basic.Comp (t, u)]]
-  | RedO t ->
-     let t = get @@ to_basic t in
-     [[Basic.RedO t]]
-  | RedL t ->
-     let t = get @@ to_basic t in
-     [[Basic.RedL t]]
-  | RedR t ->
-     let t = get @@ to_basic t in
-     [[Basic.RedR t]]
   | Under _ | Over _ ->
      raise Not_canonical
   | Meet (t, u) ->
-     to_basic t @ to_basic u
+     to_cnf t @ to_cnf u
   | Join (t, u) ->
-     let tss = to_basic t in
-     let uss = to_basic u in
-     let rec distr tss =
-       match tss with
-       | [] ->
-          uss
-       | ts :: tss ->
-          List.map (fun us -> ts @ us) (distr tss)
-     in
-     distr tss
+     let ts = get_join @@ to_cnf t in
+     let us = get_join @@ to_cnf u in
+     [ts @ us]
+  | Neg t ->
+     let t = get_atomic @@ to_cnf t in
+     [[Basic.Neg t]]

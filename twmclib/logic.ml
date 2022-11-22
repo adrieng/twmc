@@ -1,3 +1,5 @@
+(** A module for the quantifier-free theory of integers with addition, plus
+    added administrative functions to interact with e.g. solvers. *)
 module type S = sig
   module V : Sigs.HashedOrderedType
 
@@ -15,7 +17,7 @@ module type S = sig
 
   val ( + ) : term -> term -> term
 
-  (** Propositions. *)
+  (** First-order formulae. *)
   type prop
 
   val ( = ) : term -> term -> prop
@@ -39,7 +41,7 @@ module type S = sig
   val entails : prop list -> prop -> prop
 
   (** Queries are top-level objects in which formulae are asserted and variables
-     are created. *)
+      are created. *)
   type query
 
   (** Pretty-print a query. *)
@@ -52,7 +54,7 @@ module type S = sig
   val fresh : ?name:string -> query -> var
 
   (** Assert a formula in a logical query, i.e., assume that it ought to be
-     satisfiable. *)
+      satisfiable. *)
   val assert_ : query -> prop -> unit
 
   (** Append a comment to a logical query. *)
