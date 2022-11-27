@@ -38,6 +38,8 @@ let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
 
   let open L in
 
+  let comment = L.comment q in
+
   let c0 = lit 0 and c1 = lit 1 in
 
   let ( <==> ) p q = p ==> q && q ==> p in
@@ -64,6 +66,8 @@ let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
   (* Condition 3.1-3.2 and 3.4-3.5. *)
   Sampleset.iter_evals
     (fun t samples ->
+      comment (Format.sprintf "Conditions for %s[-]"
+                 (Print.PPrint.to_string (Basic.pp t)));
       let for_all p = Sample.Set.iter (fun a -> p a) samples in
       let holds_for_all ?comment p = for_all (fun a -> holds ?comment @@ p a) in
       (* Condition 3.1. *)
@@ -96,6 +100,7 @@ let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
           end);
 
       (* Condition 3.3. *)
+      comment "* Successor conditions *";
       Sampleset.iter_all
         (fun a ->
           match Sample.view a with
@@ -109,11 +114,13 @@ let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
       (* Conditions 3.6-3.12. *)
       begin match t with
       | Id ->
+         comment "* Identity conditions *";
          (* Condition 3.6. *)
          holds_for_all ~comment:"3.6" (fun a -> deval t a = d a);
          (* Condition 3.7 *)
          holds ~comment:"3.7" @@ is_omega (dlast Basic.Id)
       | Comp (u, v) ->
+         comment "* Composition conditions *";
          (* Condition 3.8. *)
          holds_for_all ~comment:"3.8"
            (fun a -> deval u (Sample.eval v a) = deval t a);
@@ -121,6 +128,7 @@ let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
          holds ~comment:"3.9" @@ (is_omega (dlast t) ==>
                                     (is_omega (dlast u) && is_omega (dlast v)))
       | Neg u ->
+         comment "* Negation conditions *";
          (* Condition 3.10. *)
          holds_for_all ~comment:"3.10"
            (fun a -> is_finite_positive (d a) ==>
@@ -139,10 +147,8 @@ let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
 
   (* These are the top-level conditions to be falsified, expressing that we are
      looking for counter-examples. *)
-  List.iter
-    (fun t ->
-      holds ~comment:"initial constraint" Sample.(deval t (var k) < d (var k)))
-    ts;
+  comment "Root constraints";
+  List.iter (fun t -> holds Sample.(deval t (var k) < d (var k))) ts;
 
   (* We return the final query. *)
   q
