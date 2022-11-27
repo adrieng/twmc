@@ -68,7 +68,7 @@ module SMTLIB = struct
   type query =
     {
       mutable contents : phrase list;
-      mutable variables : V.t list;
+      mutable variables : (string * V.t) list;
     }
 
   let make () =
@@ -83,9 +83,9 @@ module SMTLIB = struct
   let comment prb c =
     prb.contents <- Comment c :: prb.contents
 
-  let fresh ?(name = "") prb =
+  let fresh ?(comment = "") ?(name = "") prb =
     let x = V.fresh ~name () in
-    prb.variables <- x :: prb.variables;
+    prb.variables <- (comment, x) :: prb.variables;
     x
 
   let pp query =
@@ -140,7 +140,13 @@ module SMTLIB = struct
     let hardlines f xs = concat_map (fun x -> f x ^^ hardline) xs in
     let variables =
       hardlines
-        (fun x -> !^ "(declare-const " ^^ pp_var x ^^ !^ " Int)")
+        (fun (c, x) ->
+          separate hardline
+            [
+              if Stdlib.(c = "") then empty else !^ (Printf.sprintf "; %s" c);
+              !^ "(declare-const " ^^ pp_var x ^^ !^ " Int)";
+              !^ "(assert (>= " ^^ pp_var x ^^ !^ " 0))";
+            ])
         query.variables
     in
     let contents = hardlines pp_phrase (List.rev query.contents) in
@@ -240,7 +246,8 @@ module Z3 = struct
       solver = Z3.Solver.mk_solver_s !cx "QF_LIA";
     }
 
-  let fresh ?(name = "") query =
+  let fresh ?(comment = "") ?(name = "") query =
+    ignore comment;
     let int_s = Z3.Arithmetic.Integer.mk_sort !cx in
     let x = Z3.Expr.(ast_of_expr @@ mk_fresh_const !cx name int_s) in
     query.variables <- x :: query.variables;

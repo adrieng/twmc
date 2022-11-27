@@ -55,7 +55,7 @@ module type S = sig
   val make : unit -> query
 
   (** Create a fresh variable in the given query. *)
-  val fresh : ?name:string -> query -> var
+  val fresh : ?comment:string -> ?name:string -> query -> var
 
   (** Assert a formula in a logical query, i.e., assume that it ought to be
       satisfiable. *)

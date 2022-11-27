@@ -16,7 +16,12 @@ let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
     fun a ->
     try Sample.Table.find t a
     with Not_found ->
-      let v = L.fresh q in
+      let v =
+        L.fresh
+          ~comment:(if !Options.debug
+                    then Print.PPrint.to_string (Sample.pp a)
+                    else "") q
+      in
       Sample.Table.add t a v;
       v
   in
@@ -29,23 +34,26 @@ let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
   (* [d] is the delta map of the paper. *)
   let d a = L.var (v a) in
 
-  (* Encoding of IDL over omega+ into IDL over omega.  *)
+  (* Encoding of difference logic over omega+ into IDL over omega.  *)
 
   let open L in
 
   let c0 = lit 0 and c1 = lit 1 in
+
+  let ( <==> ) p q = p ==> q && q ==> p in
+
   let is_omega x = x = c0 in
   let is_zero x = x = c1 in
   let is_finite x = not_ (is_omega x) in
   let is_positive x = not_ (is_zero x) in
   let is_finite_positive x = is_finite x && is_positive x in
+  (* [is_succ ~suc ~pre] means that [suc] is [pre + 1]. *)
   let is_succ ~suc ~pre =
     (is_omega suc && is_omega pre)
     || (is_finite suc && is_finite pre && suc = pre + c1)
   in
   let ( <= ) x y = is_omega y || (is_finite x && x <= y) in
   let ( < ) x y = x <= y && not_ (x = y) in
-  let ( <==> ) p q = p ==> q && q ==> p in
 
   (* Diagram conditions. *)
 
@@ -75,7 +83,7 @@ let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
             (is_zero (d a) ==> is_zero (deval t a));
           (* Condition 3.4. *)
           holds
-            ~comment:"3.3"
+            ~comment:"3.4"
             (dlast t <= d a <==> (devallast t = deval t a));
           (* Condition 3.5. *)
           begin match Sample.view a with
@@ -119,7 +127,7 @@ let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
                        (deval u (Sample.eval t a) < d a));
          (* Condition 3.11. *)
          holds_for_all ~comment:"3.11"
-           (fun a -> is_finite (deval u a) ==>
+           (fun a -> is_finite (deval t a) ==>
                        (d a <= deval u Sample.(succ (eval t a))));
          (* Condition 3.12. *)
          holds ~comment:"3.12" @@ (is_omega (dlast t) ==> is_omega (dlast u))
@@ -131,7 +139,10 @@ let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
 
   (* These are the top-level conditions to be falsified, expressing that we are
      looking for counter-examples. *)
-  List.iter (fun t -> holds Sample.(deval t (var k) < d (var k))) ts;
+  List.iter
+    (fun t ->
+      holds ~comment:"initial constraint" Sample.(deval t (var k) < d (var k)))
+    ts;
 
   (* We return the final query. *)
   q
