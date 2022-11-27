@@ -8,7 +8,7 @@ include Sigs.HashedOrderedType with type t := t
 
 val equal : t -> t -> bool
 
-val pp : t -> PPrint.document
+val pp : ?debug:bool -> t -> PPrint.document
 
 (** {2 Construction/destruction} *)
 

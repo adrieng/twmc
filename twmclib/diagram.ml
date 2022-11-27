@@ -21,12 +21,15 @@ let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
       v
   in
 
-  let holds p = L.assert_ q p in
+  let holds ?comment p =
+    Option.iter (L.comment q) comment;
+    L.assert_ q p
+  in
 
   (* [d] is the delta map of the paper. *)
   let d a = L.var (v a) in
 
-  (* Encoding of LIA over omega+ into LIA over omega.  *)
+  (* Encoding of IDL over omega+ into IDL over omega.  *)
 
   let open L in
 
@@ -50,130 +53,81 @@ let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
   let dlast t = d (Sample.last t) in
   let devallast t = deval t (Sample.last t) in
 
-  (* Condition 3.1, 3.2, and 3.4. *)
-  let cond_mon t a1 a2 = (d a1 <= d a2) ==> ((deval t a1) <= (deval t a2)) in
+  (* Condition 3.1-3.2 and 3.4-3.5. *)
   Sampleset.iter_evals
     (fun t samples ->
+      let for_all p = Sample.Set.iter (fun a -> p a) samples in
+      let holds_for_all ?comment p = for_all (fun a -> holds ?comment @@ p a) in
       (* Condition 3.1. *)
-      Sample.Set.iter
+      for_all
         (fun a1 ->
-          Sample.Set.iter
-            (fun a2 -> if not (Sample.equal a1 a2)
-                       then holds (cond_mon t a1 a2))
-            samples)
-        samples;
-      Sample.Set.iter
+          for_all
+            (fun a2 ->
+              if not (Sample.equal a1 a2)
+              then holds
+                     ~comment:"3.1"
+                     ((d a1 <= d a2) ==> ((deval t a1) <= (deval t a2)))));
+      for_all
         (fun a ->
           (* Condition 3.2. *)
-          holds (is_zero (d a) ==> is_zero (deval t a));
+          holds
+            ~comment:"3.2"
+            (is_zero (d a) ==> is_zero (deval t a));
           (* Condition 3.4. *)
-          holds (dlast t <= d a <==> (devallast t = deval t a));
+          holds
+            ~comment:"3.3"
+            (dlast t <= d a <==> (devallast t = deval t a));
+          (* Condition 3.5. *)
           begin match Sample.view a with
           | Sample.SLast t' when Basic.equal t t' ->
-             (* Condition 3.5. *)
-             holds (is_omega (d a) ==> is_omega (devallast t))
+             holds
+                ~comment:"3.5"
+               (is_omega (d a) ==> is_omega (devallast t))
           | _ ->
              ()
-          end)
-        samples
+          end);
+
+      (* Condition 3.3. *)
+      Sampleset.iter_all
+        (fun a ->
+          match Sample.view a with
+          | Sample.SSucc a' ->
+             holds ~comment:"3.3" @@ is_succ ~pre:(d a') ~suc:(d a)
+
+          | _ ->
+             ())
+        set;
+
+      (* Conditions 3.6-3.12. *)
+      begin match t with
+      | Id ->
+         (* Condition 3.6. *)
+         holds_for_all ~comment:"3.6" (fun a -> deval t a = d a);
+         (* Condition 3.7 *)
+         holds ~comment:"3.7" @@ is_omega (dlast Basic.Id)
+      | Comp (u, v) ->
+         (* Condition 3.8. *)
+         holds_for_all ~comment:"3.8"
+           (fun a -> deval u (Sample.eval v a) = deval t a);
+         (* Condition 3.9. *)
+         holds ~comment:"3.9" @@ (is_omega (dlast t) ==>
+                                    (is_omega (dlast u) && is_omega (dlast v)))
+      | Neg u ->
+         (* Condition 3.10. *)
+         holds_for_all ~comment:"3.10"
+           (fun a -> is_finite_positive (d a) ==>
+                       (deval u (Sample.eval t a) < d a));
+         (* Condition 3.11. *)
+         holds_for_all ~comment:"3.11"
+           (fun a -> is_finite (deval u a) ==>
+                       (d a <= deval u Sample.(succ (eval t a))));
+         (* Condition 3.12. *)
+         holds ~comment:"3.12" @@ (is_omega (dlast t) ==> is_omega (dlast u))
+      | _ ->
+         ()
+      end
     )
     set;
-
-  Sampleset.iter_all
-    (fun a ->
-      match Sample.view a with
-      | Sample.SSucc a' ->
-         (* Condition 3.3. *)
-         holds @@ is_succ ~pre:(d a') ~suc:(d a)
-
-      | _ ->
-         ())
-    set;
-
-  (* TODO: implement conditions 3.6-3.12. *)
-
-    (*   (\* Conditions for structural soundness (minus condition 1). *\) *)
-    (*   (\* | Sample.SLast (Basic.RedO _) -> *\) *)
-    (*   (\*    (\\* Condition 13 *\\) *\) *)
-    (*   (\*    holds @@ is_finite (d a) *\) *)
-    (*   | Sample.SEval (t, a') -> *)
-    (*      (\* Condition 2 *\) *)
-    (*      holds @@ (is_zero (d a') ==> is_zero (d a)); *)
-    (*      (\* Condition 5 *\) *)
-    (*      holds @@ ((dlast t <= d a') <==> (d a = devallast t)); *)
-    (*      (\* Condition 6 *\) *)
-    (*      holds @@ (is_omega (dlast t) ==> is_omega (devallast t)); *)
-    (*      (\* The remaining conditions are specific to the shape of t. *\) *)
-    (*      begin match t with *)
-    (*      | Basic.Var _ -> *)
-    (*         (); *)
-
-    (*      (\* Conditions for logical soundness. *\) *)
-    (*      | Basic.Id -> *)
-    (*         (\* Condition 7 *\) *)
-    (*         holds (d a = d a') *)
-    (*      (\* | Basic.Bot -> *\) *)
-    (*      (\*    (\\* Condition 8 *\\) *\) *)
-    (*      (\*    holds @@ is_zero (dlast t) *\) *)
-    (*      (\* | Basic.Top -> *\) *)
-    (*      (\*    (\\* These conditions does not appear in the paper since Top is not *\) *)
-    (*      (\*       primitive there. *\\) *\) *)
-    (*      (\*    holds (is_positive (d a') ==> is_omega (d a)); *\) *)
-    (*      (\*    holds (dlast t = c1); *\) *)
-    (*      | Basic.Comp (u1, u2) -> *)
-    (*         (\* Condition 9 *\) *)
-    (*         holds (d a = deval u1 (Sample.eval u2 a')); *)
-    (*         (\* Condition 10 *\) *)
-    (*         holds (is_omega (dlast t) *)
-    (*                ==> (is_omega (dlast u1) && is_omega (dlast u2))) *)
-
-    (*      (\* (\\* Conditions for o-soundness. *\\) *\) *)
-    (*      (\* | Basic.RedO t' -> *\) *)
-    (*      (\*    (\\* Condition 11 *\\) *\) *)
-    (*      (\*    holds (is_zero (d a) || is_omega (d a)); *\) *)
-    (*      (\*    (\\* Condition 12 *\\) *\) *)
-    (*      (\*    holds (is_finite (d a') *\) *)
-    (*      (\*           ==> (is_omega (d a) <==> is_omega (deval t' a'))); *\) *)
-    (*      (\*    (\\* Condition 13 has been handled above. *\\) *\) *)
-    (*      (\*    (); *\) *)
-    (*      (\*    (\\* Condition 14 *\\) *\) *)
-    (*      (\*    holds ((is_finite (devallast t) && is_finite (d a')) *\) *)
-    (*      (\*           ==> is_finite (deval t' a')) *\) *)
-
-    (*      (\* (\\* Conditions for r-soundness. *\\) *\) *)
-    (*      (\* | Basic.RedR t' -> *\) *)
-    (*      (\*    (\\* Condition 15 *\\) *\) *)
-    (*      (\*    holds (deval t' Sample.(eval t a') <= d a'); *\) *)
-    (*      (\*    (\\* Condition 16 *\\) *\) *)
-    (*      (\*    holds ((is_finite_positive (d a') && is_finite (d a)) *\) *)
-    (*      (\*           ==> (d a' < deval t' Sample.(succ a))); *\) *)
-    (*      (\*    (\\* Condition 17 *\\) *\) *)
-    (*      (\*    holds (is_omega (dlast t) ==> (is_omega (dlast t'))); *\) *)
-    (*      (\*    (\\* Condition 18 *\\) *\) *)
-    (*      (\*    holds (is_finite (devallast t) *\) *)
-    (*      (\*           ==> is_omega (deval t' Sample.(succ (eval t (last t))))); *\) *)
-
-    (*      (\* (\\* Conditions for l-soundness. *\\) *\) *)
-    (*      (\* | Basic.RedL t' -> *\) *)
-    (*      (\*    (\\* Condition 19 *\\) *\) *)
-    (*      (\*    holds (is_finite (d a) ==> (d a' <= deval t' a)); *\) *)
-    (*      (\*    (\\* Condition 20 *\\) *\) *)
-    (*      (\*    holds ((is_finite_positive (d a') && is_finite (d a)) *\) *)
-    (*      (\*           ==> (deval t' Sample.(pred a) < d a')); *\) *)
-    (*      (\*    (\\* Condition 21 *\\) *\) *)
-    (*      (\*    holds ((is_finite (d a') && is_omega (d a)) *\) *)
-    (*      (\*           ==> (deval t' a < d a')); *\) *)
-    (*      (\*    (\\* Condition 22 *\\) *\) *)
-    (*      (\*    holds (is_omega (dlast t) ==> is_omega (dlast t')); *\) *)
-    (*      (\*    (\\* Condition 23 *\\) *\) *)
-    (*      (\*    holds (is_finite (devallast t) *\) *)
-    (*      (\*           ==> is_omega (deval t' Sample.(eval t (last t)))) *\) *)
-
-    (*      end *)
-    (*   | Sample.SVar _ | Sample.SLast _ -> *)
-    (*      () *)
-    (* ) *)
-    (* set; *)
 
   (* These are the top-level conditions to be falsified, expressing that we are
      looking for counter-examples. *)

@@ -1,7 +1,11 @@
 type t =
   {
     all : Sample.Set.t;
+    (** All the samples in the sample set. *)
     evals : Sample.Set.t Basic.Map.t;
+    (** Samples [a] such that [eval t a] belongs to [all], indexed by [t]. *)
+    lasts : Basic.Set.t;
+    (** Basic terms [t] such that [last t] belongs to [all]. *)
   }
 
 let pp set =
@@ -13,13 +17,15 @@ let empty =
   {
     all = Sample.Set.empty;
     evals = Basic.Map.empty;
+    lasts = Basic.Set.empty;
   }
 
 let extend a set =
   {
-    all = Sample.Set.add a set.all;
+    all =
+      Sample.Set.add a set.all;
     evals =
-      match Sample.view a with
+      begin match Sample.view a with
       | SEval (t, a) ->
          let evals_of_t =
            try Basic.Map.find t set.evals
@@ -27,7 +33,15 @@ let extend a set =
          in
          Basic.Map.add t (Sample.Set.add a evals_of_t) set.evals
       | _ ->
-         set.evals;
+         set.evals
+      end;
+    lasts =
+      begin match Sample.view a with
+      | SLast t ->
+         Basic.Set.add t set.lasts
+      | _ ->
+         set.lasts
+      end;
   }
 
 let rec saturate a set =
@@ -70,3 +84,9 @@ let fold_evals f set ini =
 
 let iter_evals f set =
   Basic.Map.iter f set.evals
+
+let fold_lasts f set ini =
+  Basic.Set.fold f set.lasts ini
+
+let iter_lasts f set =
+  Basic.Set.iter f set.lasts

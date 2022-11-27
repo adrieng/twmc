@@ -30,3 +30,12 @@ val fold_evals : (Basic.t -> Sample.Set.t -> 'a -> 'a) -> t -> 'a -> 'a
 (** [iter_evals] is the expected special case of [fold_eval] tailored to
    effectful operations. *)
 val iter_evals : (Basic.t -> Sample.Set.t -> unit) -> t -> unit
+
+(** [fold_all f s ini] folds function [f] over all the basic terms [t] such that
+    [Sample.last t] belongs to the saturated sample set [s], starting with
+    accumulator [ini]. The order in which terms are processed is arbitrary. *)
+val fold_lasts : (Basic.t -> 'a -> 'a) -> t -> 'a -> 'a
+
+(** [iter_lasts] is the expected special case of [fold_lasts] tailored to
+    effectful operations. *)
+val iter_lasts : (Basic.t -> unit) -> t -> unit

@@ -21,8 +21,15 @@ module SMTLIB = struct
     add
 
   type prop =
+    | Const of bool
     | Cmp of [`Eq | `Le | `Lt] * term * term
     | Prop of [`And | `Or | `Entails | `Not] * prop list
+
+  let true_ =
+    Const true
+
+  let false_ =
+    Const false
 
   let ( = ) f g =
     Cmp (`Eq, f, g)
@@ -85,7 +92,7 @@ module SMTLIB = struct
     let open PPrint in
 
     let pp_sexp op f args =
-      group @@ parens @@ !^ op ^/^ separate_map (break 1) f args
+      parens @@ group @@ prefix 2 1 (!^ op) (separate_map (break 1) f args)
     in
 
     let rec pp_var x =
@@ -102,6 +109,8 @@ module SMTLIB = struct
 
     and pp_prop f =
       match f with
+      | Const b ->
+         !^ (Printf.sprintf "(%b)" b)
       | Cmp (op, t, u) ->
          let s =
            match op with
@@ -137,7 +146,7 @@ module SMTLIB = struct
     let contents = hardlines pp_phrase (List.rev query.contents) in
     concat
       [
-        !^ "(set-logic QF_LIA)\n";
+        !^ "(set-logic QF_IDL)\n";
         variables;
         contents;
         !^ "; Infrastructure\n";
@@ -147,7 +156,7 @@ module SMTLIB = struct
       ]
 
   let to_channel oc query =
-    PPrint.ToChannel.pretty 0.9 80 oc (pp query)
+    PPrint.ToChannel.pretty 1.0 80 oc (pp query)
 end
 
 module Z3 = struct
@@ -182,6 +191,12 @@ module Z3 = struct
     add
 
   type prop = Z3.Expr.expr
+
+  let true_ =
+    Z3.Boolean.mk_true !cx
+
+  let false_ =
+    Z3.Boolean.mk_false !cx
 
   let ( = ) t u =
     Z3.Boolean.mk_eq !cx t u

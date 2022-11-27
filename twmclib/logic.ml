@@ -32,6 +32,10 @@ module type S = sig
 
   val ( ==> ) : prop -> prop -> prop
 
+  val true_ : prop
+
+  val false_ : prop
+
   val not_ : prop -> prop
 
   val and_ : prop list -> prop

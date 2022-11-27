@@ -51,20 +51,23 @@ module Term(S : Sigs.Signature) = struct
   let view t =
     t.body
 
-  let rec pp { body; id; hash; } =
-    let open PPrint in
-    let d = S.pp pp body in
-    if !Options.debug
-    then
-      OCaml.record
-        ""
-        [
-          "body", S.pp pp body;
-          "id", !^ (string_of_int id);
-          "hash", !^ (string_of_int hash);
-        ]
-    else
-      d
+  let rec pp ?(debug = false) term =
+    let rec loop { body; id; hash; } =
+      let open PPrint in
+      let d = S.pp pp body in
+      if debug
+      then
+        OCaml.record
+          ""
+          [
+            "body", S.pp pp body;
+            "id", !^ (string_of_int id);
+            "hash", !^ (string_of_int hash);
+          ]
+      else
+        d
+    in
+    loop term
 
   let equal t1 t2 =
     t1 == t2 || 0 = Stdlib.compare t1.id t2.id

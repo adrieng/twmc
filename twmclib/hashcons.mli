@@ -22,7 +22,7 @@ module Term(S : Sigs.Signature) : sig
   (** [view t] exposes the body of a term, i.e., its internal representation. *)
   val view : t -> t S.t
 
-  (** [pp t] pretty-prints the (hash-consed) term. If [!Options.debug] is true,
-     more information is printed.  *)
-  val pp : t -> PPrint.document
+  (** [pp t] pretty-prints the (hash-consed) term. If [debug] is set to true,
+      more information is printed.  *)
+  val pp : ?debug:bool -> t -> PPrint.document
 end

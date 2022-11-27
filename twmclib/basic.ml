@@ -13,7 +13,7 @@ let rec pp t =
   | Id ->
      !^ "id"
   | Comp (t, u) ->
-     parens @@ group @@ pp t ^//^ pp u
+     group @@ pp t ^//^ pp u
   | Neg t ->
      begin match t with
      | Comp _ -> parens (pp t)
