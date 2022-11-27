@@ -7,8 +7,11 @@ type t =
     (** The valuation assigns to every variable in [r] a compact term.  *)
     point : int;
     (** The time step at which the relation [r] fails when its variables are
-       specified as per the valuation. *)
+        specified as per the valuation. *)
   }
+
+(** [add ce x p] adds the binding [x = p] to the counterexample [ce]. *)
+val add : t -> Warp.id -> Compact.t -> t
 
 (** Print a counterexample as a PPrint.document. *)
 val pp : t -> PPrint.document

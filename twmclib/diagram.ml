@@ -8,7 +8,10 @@
    This is the last key part of the algorithm, since this query can then be sent
    to an SMT solver and checked for satisfiability. *)
 
-let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
+let translate
+      (type a b)
+      (module L : Logic.S with type query = a and type V.t = b)
+      set k ts : a * (b Logic.valuation -> Counterexample.t) =
   let q = L.make () in
 
   let v =
@@ -150,5 +153,28 @@ let translate (type a) (module L : Logic.S with type query = a) set k ts : a =
   comment "Root constraints";
   List.iter (fun t -> holds Sample.(deval t (var k) < d (var k))) ts;
 
-  (* We return the final query. *)
-  q
+  (* Build a counter-example from an SMT-level counter-model. *)
+  let build_countermodel (c : b Logic.valuation) =
+    let s a = c @@ v a in
+    Sampleset.fold_evals
+      (fun t samples ce ->
+        begin match t with
+        | Basic.Var x ->
+           (* FIXME conversion *)
+           let last = s Sample.(eval t @@ last t) in
+           let last =
+             if Stdlib.(last = 0) then Compact.Omega else Compact.Fin (last - 1)
+           in
+           let points = Sample.Set.to_seq samples
+                        |> Seq.map (fun a -> s a, s Sample.(eval t a))
+                        |> List.of_seq in
+           Counterexample.add ce x (Compact.of_points ~last points)
+        | _ ->
+           ce
+        end)
+      set
+      Counterexample.{ valuation = []; point = c @@ v @@ Sample.var k; }
+  in
+
+  (* We return the final query together with the countermodel builder. *)
+  q, build_countermodel

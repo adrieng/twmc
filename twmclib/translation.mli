@@ -1,5 +1,5 @@
 module Make(L : Logic.S) : sig
-  module S : module type of Sampler.Make(Warp.V)(L)
+  module S : module type of Sampler.Make(Term.V)(L)
 
   type instance =
     {

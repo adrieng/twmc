@@ -64,3 +64,5 @@ module type S = sig
   (** Append a comment to a logical query. *)
   val comment : query -> string -> unit
 end
+
+type 'a valuation = 'a -> int

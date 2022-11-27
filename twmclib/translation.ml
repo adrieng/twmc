@@ -1,5 +1,5 @@
 module Make(L : Logic.S) = struct
-  module S = Sampler.Make(Warp.V)(L)
+  module S = Sampler.Make(Term.V)(L)
 
   type instance =
     {
@@ -79,7 +79,7 @@ module Make(L : Logic.S) = struct
     }
 
   let counterexample inst model =
-    let module HT = Hashtbl.Make(Warp.V) in
+    let module HT = Hashtbl.Make(Term.V) in
     let omega = model inst.omega in
     let ht = HT.create 100 in
     let add_sample x p q =
@@ -102,7 +102,7 @@ module Make(L : Logic.S) = struct
     {
       Counterexample.valuation =
         HT.to_seq ht
-        |> Seq.map (fun (x, a) -> x, Compact.make a)
+        |> Seq.map (fun (x, a) -> x, Compact.(make a (Fin 0)))
         |> List.of_seq;
       Counterexample.point = model inst.test;
     }

@@ -23,15 +23,15 @@ type ('logic_query, 'result) solver =
   'result
 
 let to_logic
-      (type a)
-      (module L : Logic.S with type query = a)
+      (type a b)
+      (module L : Logic.S with type query = a and type V.t = b)
       ?(on_initial_positive_term = fun _ -> ())
       ?(on_residual_simple_term = fun _ -> ())
       ?(on_canonical_term = fun _ -> ())
       ?(on_basic_positive_terms = fun _ -> ())
       ?(on_saturated_sample_set = fun _ -> ())
       ?(on_logic_query = fun ~pp _ -> ignore pp; ())
-      pb : a list =
+      pb : (a * (b Logic.valuation -> Counterexample.t)) list =
   (* First, we translate the problem [pb] into a term [s] such that [pb] is
      valid iff [id <= s] is valid. *)
   let s =
@@ -71,7 +71,7 @@ let to_logic
       (fun (k, ts, ss) -> Diagram.translate (module L) ss k ts)
       sss
   in
-  List.iter (on_logic_query ~pp:L.pp) queries;
+  List.iter (fun (q, _) -> on_logic_query ~pp:L.pp q) queries;
   queries
 
 let to_solution
@@ -82,7 +82,7 @@ let to_solution
       ?(on_saturated_sample_set = fun _ -> ())
       ?(on_logic_query = fun ~pp _ -> ignore pp; ())
       pb =
-  let solve query =
+  let solve query builder =
     match Backends.Z3.solve query with
     | Z3.Solver.UNKNOWN ->
        let r_s = Print.PPrint.to_string (pp pb) in
@@ -100,9 +100,8 @@ let to_solution
             "%s: no model, please send to <guatto@irif.fr>\n"
             r_s;
           exit 1
-       | Some _ ->
-          (* TODO *)
-          `Invalid Counterexample.dummy
+       | Some countermodel ->
+          `Invalid (builder countermodel)
        end
   in
 
@@ -110,8 +109,8 @@ let to_solution
     match queries with
     | [] ->
        `Valid
-    | query :: queries ->
-       begin match solve query with
+    | (query, builder) :: queries ->
+       begin match solve query builder with
        | `Valid ->
           solve_all queries
        | invalid ->

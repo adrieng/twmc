@@ -24,8 +24,8 @@ type ('logic_query, 'result) solver =
   'result
 
 val to_logic :
-  (module Logic.S with type query = 'a) ->
-  ('a, 'a list) solver
+  (module Logic.S with type query = 'a and type V.t = 'b) ->
+  ('a, (('a * ('b Logic.valuation -> Counterexample.t)) list)) solver
 
 val to_solution :
   (Backends.Z3.query, [`Valid | `Invalid of Counterexample.t]) solver

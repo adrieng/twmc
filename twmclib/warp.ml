@@ -1,6 +1,4 @@
-module V = Symbol.Make()
-
-type id = V.t
+type id = Term.V.t
 
 type atom =
   | Var of id
@@ -15,7 +13,7 @@ module Print = struct
   open PPrint
 
   let id x =
-    !^ (V.to_string x)
+    !^ (Term.V.to_string x)
 
   let rec atom t =
     let open PPrint in
@@ -37,7 +35,7 @@ module Print = struct
 end
 
 module Infix = struct
-  let v name = Var (V.fresh ~name ())
+  let v name = Var (Term.V.fresh ~name ())
   let ( * ) t u = Star (t, u)
   let ( <= ) t u = Le (t, u)
 end

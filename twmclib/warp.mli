@@ -1,7 +1,5 @@
-module V : Symbol.S
-
 (** Time-warp variables. *)
-type id = V.t
+type id = Term.V.t
 
 (** Atomic time-warp terms. *)
 type atom =

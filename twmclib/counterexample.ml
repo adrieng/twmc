@@ -4,6 +4,8 @@ type t =
     point : int;
   }
 
+let add ce x p = { ce with valuation = (x, p) :: ce.valuation; }
+
 let dummy = { valuation = []; point = 0; }
 
 let pp ({ valuation; point; } as cex) =

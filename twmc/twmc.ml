@@ -65,6 +65,7 @@ let process s =
   | Dump file ->
      let oc = open_out file in
      Problem.to_logic (module Backends.SMTLIB) p
+     |> List.map fst
      |> List.iter (Backends.SMTLIB.to_channel oc);
      close_out oc
 
