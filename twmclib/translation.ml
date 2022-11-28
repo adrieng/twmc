@@ -102,7 +102,7 @@ module Make(L : Logic.S) = struct
     {
       Counterexample.valuation =
         HT.to_seq ht
-        |> Seq.map (fun (x, a) -> x, Compact.(make a (Fin 0)))
+        |> Seq.map (fun (x, a) -> x, Compact.(make a Enat.zero))
         |> List.of_seq;
       Counterexample.point = model inst.test;
     }

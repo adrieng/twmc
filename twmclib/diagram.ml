@@ -162,9 +162,6 @@ let translate
         | Basic.Var x ->
            (* FIXME conversion *)
            let last = s Sample.(eval t @@ last t) in
-           let last =
-             if Stdlib.(last = 0) then Compact.Omega else Compact.Fin (last - 1)
-           in
            let points = Sample.Set.to_seq samples
                         |> Seq.map (fun a -> s a, s Sample.(eval t a))
                         |> List.of_seq in
@@ -173,7 +170,8 @@ let translate
            ce
         end)
       set
-      Counterexample.{ valuation = []; point = c @@ v @@ Sample.var k; }
+      Counterexample.{ valuation = [];
+                       point = Enat.to_int @@ c @@ v @@ Sample.var k; }
   in
 
   (* We return the final query together with the countermodel builder. *)

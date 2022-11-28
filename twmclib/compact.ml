@@ -1,23 +1,15 @@
-type enat =
-  | Fin of int
-  | Omega
-
 type t =
   {
     u : int array;
     u_sum : int;
-    v : enat;
+    v : Enat.t;
   }
-
-let pp_period = function
-  | Fin i -> string_of_int i
-  | Omega -> "w"
 
 let pp { u; v; _ } =
   let open PPrint in
   let int i = !^ (string_of_int i) in
   group (separate_map (break 1) int (Array.to_list u)
-         ^^ !^ (Printf.sprintf "(%s)" (pp_period v)))
+         ^^ !^ (Printf.sprintf "(%s)" Enat.(to_string v)))
 
 let make u v =
   {
@@ -53,26 +45,26 @@ let of_points ~last points =
   assert false
 
 let eval_period p i =
-  match p.v with
-  | Omega -> Omega
-  | Fin k -> Fin (i * k)
+  match Enat.view p.v with
+  | `Omega -> Enat.omega
+  | `Fin k -> Enat.of_int (i * k)
 
 let eval p i =
-  match i, p.v with
-  | Omega, Fin 0 ->
-     Fin 0
-  | Omega, _ ->
-     Omega
-  | Fin i, Omega when i >= Array.length p.u ->
-     Omega
-  | Fin i, Fin k when i >= Array.length p.u ->
-     Fin (p.u_sum + k * (i - Array.length p.u + 1))
-  | Fin i, _ ->
+  match Enat.view i, Enat.view p.v with
+  | `Omega, `Fin 0 ->
+     Enat.zero
+  | `Omega, _ ->
+     Enat.omega
+  | `Fin i, `Omega when i >= Array.length p.u ->
+     Enat.omega
+  | `Fin i, `Fin k when i >= Array.length p.u ->
+     Enat.of_int @@ p.u_sum + k * (i - Array.length p.u + 1)
+  | `Fin i, _ ->
     let r = ref 0 in
     for j = 0 to i - 1 do
       r := !r + p.u.(j)
     done;
-    Fin !r
+    Enat.of_int !r
 
 let equal p1 p2 =
   p1.v = p2.v && Array.for_all2 ( = ) p1.u p2.u

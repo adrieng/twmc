@@ -1,22 +1,17 @@
 (** {1 Compact time warps} *)
 
-(** Elements of the second infinite ordinal. *)
-type enat =
-  | Fin of int
-  | Omega
-
 (** A time warp is compact when it is eventually constant. *)
 type t
 
 (** [make u] creates a compact time warp whose first values are [u]. *)
-val make : int array -> enat -> t
+val make : int array -> Enat.t -> t
 
 (** [of_points ~last points] creates a compact time warp whose values are
     determined by [points] and whose last value. *)
-val of_points : last:enat -> (int * int) list -> t
+val of_points : last:Enat.t -> (Enat.t * Enat.t) list -> t
 
 (** [eval p i] returns [p(i)]. *)
-val eval : t -> enat -> enat
+val eval : t -> Enat.t -> Enat.t
 
 (** Pretty-print a compact time warp. *)
 val pp : t -> PPrint.document

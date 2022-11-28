@@ -1,8 +1,12 @@
-(** Natural numbers up to 2^{W-2}, with W the machine width, extended with a
-    number larger than all the other ones. *)
+(** An extended number can be either a natural number up to 2^{W-2}-1, where W
+    denotes the size of a machine word, or omega, a number larger than all the
+    other ones. *)
 type t
 
 val view : t -> [`Omega | `Fin of int]
+
+(** Display an extended number as a string. *)
+val to_string : t -> string
 
 (** [of_int n] raises {! Invalid_argument} if [n] is negative. *)
 val of_int : int -> t

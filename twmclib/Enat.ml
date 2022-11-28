@@ -1,5 +1,8 @@
 type t = int
 
+let to_string x =
+  if x = 0 then "\x03C9" else string_of_int (x - 1)
+
 let view x =
   assert (x >= 0);
   if x = 0 then `Omega else `Fin (x - 1)

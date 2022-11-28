@@ -65,4 +65,4 @@ module type S = sig
   val comment : query -> string -> unit
 end
 
-type 'a valuation = 'a -> int
+type 'a valuation = 'a -> Enat.t

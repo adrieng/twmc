@@ -101,7 +101,7 @@ let to_solution
             r_s;
           exit 1
        | Some countermodel ->
-          `Invalid (builder countermodel)
+          `Invalid (builder (fun x -> Enat.raw_of_int @@ countermodel x))
        end
   in
 
