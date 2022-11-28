@@ -47,26 +47,26 @@ let pattern ?(prefix = Word.empty) ~ppattern () =
   }
 
 let singleton ?(prefix = Word.empty) en =
-  match en with
-  | Enat.Fin 0 ->
+  match Enat.view en with
+  | `Fin 0 ->
      extremal ~prefix Zero
-  | Enat.Fin n ->
+  | `Fin n ->
      pattern ~prefix ~ppattern:(Word.singleton n) ()
-  | Enat.Inf ->
+  | `Omega ->
      extremal ~prefix Omega
 
 let at p n =
   assert (n >= 0);
   if n < Word.length p.u
-  then Enat.Fin (Word.at p.u n)
+  then Enat.of_int @@ Word.at p.u n
   else
     match p.v with
     | Ext Zero ->
-       Enat.Fin 0
+       Enat.of_int 0
     | Ext Omega ->
-       Enat.Inf
+       Enat.omega
     | Pat v ->
-       Enat.Fin (Word.at v @@ (n - Word.length p.u) mod Word.length v)
+       Enat.of_int @@ Word.at v @@ (n - Word.length p.u) mod Word.length v
 
 let drop p n =
   if n < Word.length p.u
@@ -95,30 +95,30 @@ let eval p ii =
     weight w1
   in
 
-  match ii with
-  | Enat.Inf ->
+  match Enat.view ii with
+  | `Omega ->
      begin match p.v with
      | Ext Zero ->
-        Enat.Fin (weight p.u)
+        Enat.of_int (weight p.u)
      | Ext Omega | Pat _ ->
-        Enat.Inf
+        Enat.omega
      end
-  | Enat.Fin 0 ->
-     Enat.Fin 0
-  | Enat.Fin i ->
+  | `Fin 0 ->
+     Enat.of_int 0
+  | `Fin i ->
      if i <= length p.u
-     then Enat.Fin (ones_word p.u i)
+     then Enat.of_int @@ ones_word p.u i
      else
        begin match p.v with
        | Ext Zero ->
-          Enat.Fin (weight p.u)
+          Enat.of_int @@ weight p.u
        | Ext Omega ->
-          Enat.Inf
+          Enat.omega
        | Pat w ->
           let i = i - length p.u in
           let n1 = Sigs.Int.div_b1 i (length w) in
           let n2 = Sigs.Int.mod_b1 i (length w) in
-          Enat.Fin (weight p.u + n1 * weight w + ones_word w n2)
+          Enat.of_int @@ weight p.u + n1 * weight w + ones_word w n2
        end
 
 let one =
@@ -256,13 +256,13 @@ let ladj p =
         res, zeroes, p
       else
         let n, p = pop p in
-        match n with
-        | Enat.Fin 0 ->
+        match Enat.view n with
+        | `Fin 0 ->
            loop res (zeroes + 1) (i + 1) p
-        | Enat.Fin value ->
+        | `Fin value ->
            assert (value > 0);
            loop Word.(res ^^ pattern zeroes value) 0 (i + 1) p
-        | Enat.Inf ->
+        | `Omega ->
            assert false
     in
     loop Word.empty 0 0 p
@@ -285,10 +285,10 @@ let ladj p =
 let radj p =
   let pl = ladj p in
   let n, pl = pop pl in
-  match n with
-  | Enat.Fin 0 | Enat.Inf ->
+  match Enat.view n with
+  | `Fin 0 | `Omega ->
      assert false
-  | Enat.Fin n ->
+  | `Fin n ->
      push (n - 1) pl
 
 let hyper_prefix p q =
@@ -358,18 +358,18 @@ let div p q =
 let period_weight p =
   match p.v with
   | Ext Zero ->
-     Enat.Fin 0
+     Enat.of_int 0
   | Ext Omega ->
-     Enat.Inf
+     Enat.omega
   | Pat w ->
-     Enat.Fin (Word.weight w)
+     Enat.of_int @@ Word.weight w
 
 let weight p =
   match p.v with
   | Ext Omega | Pat _ ->
-     Enat.Inf
+     Enat.omega
   | Ext Zero ->
-     Enat.Fin (Word.weight p.u)
+     Enat.of_int @@ Word.weight p.u
 
 let iof p j =
   eval (ladj p) j
@@ -386,8 +386,8 @@ let on p q =
       else
         let n, p = pop p in
         let s, q =
-          match n with
-          | Enat.Fin n ->
+          match Enat.view n with
+          | `Fin n ->
              let rec sum s j q =
                assert (j >= 0 && j <= n);
                if j = n
@@ -397,10 +397,10 @@ let on p q =
                  sum (s + Enat.to_int m) (j + 1) q
              in
              sum 0 0 q
-          | Enat.Inf ->
+          | `Omega ->
              (* special case *)
              assert (i + 1 = len);
-             Enat.to_int (eval q Enat.Inf), q
+             Enat.to_int (eval q Enat.omega), q
         in
         loop Word.(acc ^^ singleton s) (i + 1) p q
     in
@@ -483,7 +483,7 @@ let lc_length p q =
 let equal p q =
   let len = lc_length p q in
   let rec loop i =
-    (i >= len) || (Enat.equal (at p i) (at q i) && loop (i + 1))
+    (i >= len) || (at p i = at q i && loop (i + 1))
   in
   loop 0
 
@@ -522,7 +522,7 @@ let ( <= ) p q =
       let sum_q = Enat.(sum_q + at q i) in
       Enat.(sum_p <= sum_q) && loop sum_p sum_q (i + 1) max
   in
-  loop (Enat.Fin 0) (Enat.Fin 0) 0 (hyper_prefix p q + hyper_period p q)
+  loop (Enat.of_int 0) (Enat.of_int 0) 0 (hyper_prefix p q + hyper_period p q)
 
 let size p q =
   assert (p <= q);
@@ -537,14 +537,14 @@ let size p q =
   match p.v, q.v with
   | Ext Omega, Ext Omega ->
      (* This case avoids computing Enat.(Fin - Fin) in the loop above. *)
-     Enat.Inf
+     Enat.omega
 
   | (Ext Zero | Pat _), Ext Omega ->
      invalid_arg "size p q: p must precede q"
 
   | _, _ ->
-     let r1 = Enat.(period_weight p * Fin (period_length q)) in
-     let r2 = Enat.(period_weight q * Fin (period_length p)) in
+     let r1 = Enat.(period_weight p * (of_int @@ period_length q)) in
+     let r2 = Enat.(period_weight q * (of_int @@ period_length p)) in
      if r1 <> r2
-     then Enat.Inf
-     else loop (Enat.Fin 0) (Enat.Fin 0) 0 (hyper_prefix p q + hyper_period p q)
+     then Enat.omega
+     else loop Enat.zero Enat.zero 0 (hyper_prefix p q + hyper_period p q)
