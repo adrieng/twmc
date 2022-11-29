@@ -167,11 +167,15 @@ let translate
                         |> List.of_seq
                         |> List.sort_uniq
                              (fun (a, _) (b, _) -> Enat.compare a b) in
-           Format.eprintf "POINTS for %s:@." (Term.V.to_string x);
-           List.iter (fun (x, y) ->
-               Format.eprintf "  (%s, %s)@."
-                 (Enat.to_string x)
-                 (Enat.to_string y)) points;
+           if Options.verbosity_above 3
+           then
+             begin
+               Format.eprintf "POINTS for %s:@." (Term.V.to_string x);
+               List.iter (fun (x, y) ->
+                   Format.eprintf "  (%s, %s)@."
+                     (Enat.to_string x)
+                     (Enat.to_string y)) points
+             end;
            Counterexample.add ce x (EvLinear.of_points ~last points)
         | _ ->
            ce
