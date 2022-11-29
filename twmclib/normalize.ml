@@ -1,5 +1,7 @@
 open Term
 
+(** {2 Elimination of binary residuals} *)
+
 let rec eliminate_binary_residuals t =
   match t with
   | Var _ | Id ->
@@ -27,91 +29,83 @@ let rec eliminate_binary_residuals t =
   | Neg t ->
      Neg (eliminate_binary_residuals t)
 
-let rec comp t u =
+(** {2 Conversion to basic form} *)
+
+let invert_pol = function
+  | `CNF -> `DNF
+  | `DNF -> `CNF
+
+
+let rec comp pol t u =
   match t, u with
   | Meet (t1, t2), _ ->
-     Meet (comp t1 u, comp t2 u)
+     meet pol (comp pol t1 u) (comp pol t2 u)
   | _, Meet (u1, u2) ->
-     Meet (comp t u1, comp t u2)
+     meet pol (comp pol t u1) (comp pol t u2)
   | Join (t1, t2), _ ->
-     Join (comp t1 u, comp t2 u)
+     join pol (comp pol t1 u) (comp pol t2 u)
   | _, Join (u1, u2) ->
-     Join (comp t u1, comp t u2)
+     join pol (comp pol t u1) (comp pol t u2)
   | _ ->
      Comp (t, u)
 
-let meet t u =
-  Meet (t, u)
-  (* match t, u with *)
-  (* | Join (t1, t2), u -> *)
-  (*    Join (meet t1 u, meet t2 u) *)
-  (* | t, Join (u1, u2) -> *)
-  (*    Join (meet t u1, meet t u2) *)
-  (* | _ -> *)
-  (*    Meet (t, u) *)
+and meet pol t u =
+  match pol with
+  | `CNF ->
+     Meet (t, u)
+  | `DNF ->
+     begin match t, u with
+     | Join (t1, t2), u ->
+        Join (meet pol t1 u, meet pol t2 u)
+     | t, Join (u1, u2) ->
+        Join (meet pol t u1, meet pol t u2)
+     | _ ->
+        Meet (t, u)
+     end
 
-let rec join t u =
-  match t, u with
-  | Meet (t1, t2), u ->
-     Meet (join t1 u, join t2 u)
-  | t, Meet (u1, u2) ->
-     Meet (join t u1, join t u2)
-  | _ ->
+and join pol t u =
+  match pol with
+  | `DNF ->
      Join (t, u)
+  | `CNF ->
+     begin match t, u with
+     | Meet (t1, t2), u ->
+        Meet (join pol t1 u, join pol t2 u)
+     | t, Meet (u1, u2) ->
+        Meet (join pol t u1, join pol t u2)
+     | _ ->
+        Join (t, u)
+     end
 
-let rec over t u =
-  match t, u with
-  | Meet (t1, t2), _ ->
-     Meet (over t1 u, over t2 u)
-  | _, Meet (u1, u2) ->
-     Join (over t u1, over t u2)
-  | Join (t1, t2), _ ->
-     Join (over t1 u, over t2 u)
-  | _, Join (u1, u2) ->
-     Join (over t u1, over t u2)
-  | _ ->
-     Over (t, u)
-
-let rec under t u =
-  match t, u with
-  | Meet (t1, t2), _ ->
-     Meet (under t1 u, under t2 u)
-  | _, Meet (u1, u2) ->
-     Join (under t u1, under t u2)
-  | Join (t1, t2), _ ->
-     Join (under t1 u, under t2 u)
-  | _, Join (u1, u2) ->
-     Join (under t u1, under t u2)
-  | _ ->
-     Under (t, u)
-
-let rec neg t =
+(* [neg pol t] assumes that [t] is canonical for the polarity [pol]. *)
+and neg pol t =
   match t with
   | Meet (t, u) ->
-     Join (neg t, neg u)
+     join pol (neg pol t) (neg pol u)
   | Join (t, u) ->
-     Meet (neg t, neg u)
+     meet pol (neg pol t) (neg pol u)
   | Neg t ->
      t
   | _ ->
      Neg t
+;;
 
-let rec canonicalize t =
+exception Not_residual_simple
+
+let rec canonicalize pol t =
   match t with
   | Var _ | Id ->
      t
   | Comp (t, u) ->
-     comp (canonicalize t) (canonicalize u)
-  | Over (t, u) ->
-     over (canonicalize t) (canonicalize u)
-  | Under (t, u) ->
-     under (canonicalize t) (canonicalize u)
+     comp pol (canonicalize pol t) (canonicalize pol u)
   | Meet (t, u) ->
-     meet (canonicalize t) (canonicalize u)
+     meet pol (canonicalize pol t) (canonicalize pol u)
   | Join (t, u) ->
-     join (canonicalize t) (canonicalize u)
+     join pol (canonicalize pol t) (canonicalize pol u)
   | Neg t ->
-     neg (canonicalize t)
+     neg pol (canonicalize (invert_pol pol) t)
+  | Over _ | Under _ ->
+     raise Not_residual_simple
 
 exception Not_canonical
 

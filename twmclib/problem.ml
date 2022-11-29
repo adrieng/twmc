@@ -45,7 +45,7 @@ let to_logic
   (* Then, we put [s] in conjunctive normal form, with basic terms as atoms. *)
   let s = Normalize.eliminate_binary_residuals s in
   on_residual_simple_term s;
-  let s = Normalize.canonicalize s in
+  let s = Normalize.canonicalize `CNF s in
   on_canonical_term s;
   let tss = Normalize.to_cnf s in
   List.iter on_basic_positive_terms tss;

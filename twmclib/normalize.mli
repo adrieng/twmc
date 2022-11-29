@@ -4,8 +4,9 @@
    longer contains the binary residuals [Over] and [Under]. *)
 val eliminate_binary_residuals : Term.t -> Term.t
 
-(** [canonicalize t] puts the input term in canonical form. *)
-val canonicalize : Term.t -> Term.t
+(** [canonicalize pol t] puts the input term in canonical form, with [pol]
+    indicating whether this canonical form should be DNF or CNF. *)
+val canonicalize : [`DNF | `CNF] -> Term.t -> Term.t
 
 exception Not_canonical
 
