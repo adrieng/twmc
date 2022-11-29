@@ -19,30 +19,32 @@ let make u v =
   }
 
 let of_points ~last points =
-  (* let u = Array.make  *)
-  (* let rec loop acc points = *)
-  (*   match points with *)
-  (*   | [] -> *)
-  (*      (\* Impossible since last and 0 are always in [points]. *\) *)
-  (*      assert false *)
-  (*   | [(_, dlast)] -> *)
-  (*      List.rev acc, dlast *)
-  (*   | (a1, b1) :: ((a2, b2) :: _) as points -> *)
-  (*      assert (a1 < a2); *)
-  (*      assert (b1 < b2); *)
-  (*      let rec loop2 acc i j = *)
-  (*        if i >= a2 then loop acc points *)
-  (*        else loop2 (j :: acc) (i + 1) (min (j + 1) b2) *)
-  (*      in *)
-  (*      loop2 acc a1 b1 *)
-  (* in *)
-  (* let u, v = *)
-  (*   ((0, 0) :: points) *)
-  (*   |> List.sort (fun (a1, b1) (a2, b2) -> Stdlib.compare a1 a2) *)
-  (*   |> loop [] *)
-  (* in *)
-  (* { u = Array.of_list u; v; } *)
-  assert false
+  let points = (Enat.zero, Enat.zero) :: points in
+  let points = List.sort_uniq (fun (a, _) (b, _) -> Enat.compare a b) points in
+  let rec loop : int list -> (Enat.t * Enat.t) list -> int list * Enat.t =
+    fun acc points ->
+    match points with
+    | [] ->
+       (* Impossible since last and 0 are always in [points]. *)
+       assert false
+    | [(_, dlast)] ->
+       List.rev acc, dlast
+    | (i1, j1) :: (((i2, j2) :: _) as points) ->
+       let open Enat in
+       assert (i1 < i2);
+       assert (j1 <= j2);
+       assert (i1 < omega);
+       assert (j1 < omega);
+       let rec interpolate acc (i : Enat.t) (j : Enat.t) =
+         if i2 = Enat.omega then List.rev acc, Enat.of_int 1
+         else if j = Enat.omega then List.rev acc, Enat.omega
+         else if i2 <= i then loop acc points
+         else interpolate (Enat.to_int j :: acc) (succ i) (min (succ j) j2)
+       in
+       interpolate acc i1 j1
+  in
+  let u, v = loop [] points in
+  { u = Array.of_list u; u_sum = 0; v; }
 
 let eval_period p i =
   match Enat.view p.v with

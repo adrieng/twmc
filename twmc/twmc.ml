@@ -1,10 +1,9 @@
 open Twmclib
+open Options
 
 let on_initial_positive_term t =
   Print.PPrint.print
     PPrint.(prefix 2 1 (!^ "Problem:") (!^ "id <=" ^/^ Term.pp t))
-
-let verbosity_above k = !Options.verbosity > k
 
 let on_residual_simple_term t =
   if verbosity_above 0
@@ -43,7 +42,7 @@ let parse_problem s =
 
 let process s =
   let p = parse_problem s in
-  match !Options.mode with
+  match !mode with
   | Z3 ->
      let sol =
        Problem.to_solution
@@ -74,16 +73,16 @@ let _ =
     Arg.(align
            [
              "-dump",
-             String (fun out -> Options.mode := Dump out),
+             String (fun out -> mode := Dump out),
              "<FILE> Write generated problem to FILE.smt";
              "-z3",
-             Unit (fun () -> Options.mode := Z3),
+             Unit (fun () -> mode := Z3),
              " Solve directly using Z3 (default)";
              "-v",
-             Unit (fun () -> incr Options.verbosity),
+             Unit (fun () -> incr verbosity),
              " Be verbose";
              "-d",
-             Set Options.debug,
+             Set debug,
              " Print debug messages";
            ])
     process

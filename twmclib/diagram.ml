@@ -121,7 +121,7 @@ let translate
          (* Condition 3.6. *)
          holds_for_all ~comment:"3.6" (fun a -> deval t a = d a);
          (* Condition 3.7 *)
-         holds ~comment:"3.7" @@ is_omega (dlast Basic.Id)
+         holds ~comment:"3.7" @@ is_omega (dlast t)
       | Comp (u, v) ->
          comment "* Composition conditions *";
          (* Condition 3.8. *)
@@ -164,8 +164,15 @@ let translate
            let last = s Sample.(eval t @@ last t) in
            let points = Sample.Set.to_seq samples
                         |> Seq.map (fun a -> s a, s Sample.(eval t a))
-                        |> List.of_seq in
-           Counterexample.add ce x (Compact.of_points ~last points)
+                        |> List.of_seq
+                        |> List.sort_uniq
+                             (fun (a, _) (b, _) -> Enat.compare a b) in
+           Format.eprintf "POINTS for %s:@." (Term.V.to_string x);
+           List.iter (fun (x, y) ->
+               Format.eprintf "  (%s, %s)@."
+                 (Enat.to_string x)
+                 (Enat.to_string y)) points;
+           Counterexample.add ce x (EvLinear.of_points ~last points)
         | _ ->
            ce
         end)

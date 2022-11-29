@@ -83,6 +83,10 @@ let to_solution
       ?(on_logic_query = fun ~pp _ -> ignore pp; ())
       pb =
   let solve query builder =
+    if Options.verbosity_above 4
+    then
+      Format.eprintf "Z3 query:@\n%a@?"
+        Print.PPrint.fmt (Backends.Z3.pp query);
     match Backends.Z3.solve query with
     | Z3.Solver.UNKNOWN ->
        let r_s = Print.PPrint.to_string (pp pb) in

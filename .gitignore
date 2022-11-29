@@ -23,8 +23,12 @@ setup.log
 .merlin
 
 # Dune generated files
+*.exe
 *.install
 
 # Local OPAM switch
 _opam/
 twmc.opam
+
+# SMTLIB files
+*.smt

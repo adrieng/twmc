@@ -1,9 +1,10 @@
-(** {1 Compact time warps} *)
+(** {1 Eventually-linear time warps} *)
 
-(** A time warp is compact when it is eventually constant. *)
+(** The type of eventually linear time warps. *)
 type t
 
-(** [make u] creates a compact time warp whose first values are [u]. *)
+(** [make u s] creates a compact time warp whose first values grow by [u] and
+    which grows by increments of [s] after [u]. *)
 val make : int array -> Enat.t -> t
 
 (** [of_points ~last points] creates a compact time warp whose values are

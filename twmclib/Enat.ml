@@ -1,7 +1,7 @@
 type t = int
 
 let to_string x =
-  if x = 0 then "\x03C9" else string_of_int (x - 1)
+  if x = 0 then "omega" else string_of_int (x - 1)
 
 let view x =
   assert (x >= 0);
@@ -19,6 +19,9 @@ let to_int x = if x = omega then invalid_arg "to_int" else x - 1
 let ( <= ) x y = (y = omega) || (x <> omega && x <= y)
 
 let ( < ) x y = x <= y && not (x = y)
+
+let compare a b =
+  if a = b then 0 else if a <= b then -1 else 1
 
 let succ x = if x = omega then omega else x + 1
 

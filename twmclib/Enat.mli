@@ -23,6 +23,10 @@ val ( <= ) : t -> t -> bool
 (** Strict comparison operator. *)
 val ( < ) : t -> t -> bool
 
+(** Comparison function in the sense of {! Stdlib.compare}, consistent with
+    the ordering defined above. *)
+val compare : t -> t -> int
+
 (** The smallest natural. *)
 val zero : t
 

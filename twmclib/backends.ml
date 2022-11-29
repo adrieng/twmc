@@ -243,18 +243,19 @@ module Z3 = struct
   let make () =
     {
       variables = [];
-      solver = Z3.Solver.mk_solver_s !cx "QF_LIA";
+      solver = Z3.Solver.mk_solver_s !cx "QF_IDL";
     }
+
+  let assert_ query f =
+    Z3.Solver.add query.solver [f]
 
   let fresh ?(comment = "") ?(name = "") query =
     ignore comment;
     let int_s = Z3.Arithmetic.Integer.mk_sort !cx in
     let x = Z3.Expr.(ast_of_expr @@ mk_fresh_const !cx name int_s) in
+    assert_ query (lit 0 <= var x);
     query.variables <- x :: query.variables;
     x
-
-  let assert_ query f =
-    Z3.Solver.add query.solver [f]
 
   let comment _ s =
     Z3.Log.append s
