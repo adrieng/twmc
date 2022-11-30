@@ -42,6 +42,10 @@ let test_valid () =
       Eq (Meet (x, y), Meet (x, y));
       Eq (Join (x, y), Join (x, y));
 
+      (* Simple algebraic laws. *)
+      Le (Comp (x, Id), x);
+      Le (x, Comp (x, Id));
+
       (* Universal properties. *)
       Le (Comp (x, Under (x, y)), y);
       Le (Comp (Over (x, y), y), x);
