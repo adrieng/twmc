@@ -11,7 +11,7 @@ type t =
 let pp set =
   let open PPrint in
   let all = List.of_seq @@ Seq.map Sample.pp @@ Sample.Set.to_seq set.all in
-  braces (space ^^ align (flow (!^ ";" ^^ break 1) all) ^^ space)
+  braces @@ group @@ space ^^ align (flow (!^ ";" ^^ break 1) all) ^^ space
 
 let empty =
   {
