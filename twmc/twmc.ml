@@ -31,7 +31,7 @@ let on_saturated_sample_set ss =
   then Print.PPrint.print PPrint.(prefix 2 1 (!^ "SSS:") (Sampleset.pp ss))
 
 let on_logic_query ~pp query =
-  if verbosity_above 2
+  if verbosity_above 4
   then Print.PPrint.print PPrint.(!^ " Logic query:" ^/^ group (pp query))
 
 let parse_problem s =
