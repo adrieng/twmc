@@ -63,11 +63,11 @@ let rec saturate a set =
           (* Rewrite rule 4 from paper. *)
           set
           |> saturate Sample.(eval t (eval u a))
-       | Basic.Neg t ->
+       | Basic.Neg u ->
           (* Rewrite rule 5 from paper. *)
           set
-          |> saturate Sample.(eval t @@ eval (Neg t) a)
-          |> saturate Sample.(eval t @@ succ @@ eval (Neg t) a)
+          |> saturate Sample.(eval u @@ eval t a)
+          |> saturate Sample.(eval u @@ succ @@ eval t a)
        end
     | Sample.SSucc a ->
        (* Rewrite rule 2 from paper. *)
