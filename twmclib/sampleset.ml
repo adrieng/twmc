@@ -53,7 +53,7 @@ let rec saturate a set =
        set
     | Sample.SEval (t, a) ->
        (* Rewrite rule 1 from paper. *)
-       let set = extend a set in
+       let set = saturate a set in
        (* Rewrite rule 3 from paper. *)
        let set = saturate Sample.(eval t (last t)) set in
        begin match t with
@@ -71,7 +71,7 @@ let rec saturate a set =
        end
     | Sample.SSucc a ->
        (* Rewrite rule 2 from paper. *)
-       extend a set
+       saturate a set
 
 let fold_all f set ini =
   Sample.Set.fold f set.all ini
