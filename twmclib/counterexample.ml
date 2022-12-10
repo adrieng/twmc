@@ -17,7 +17,7 @@ let pp ({ valuation; point; } as cex) =
     in
     prefix 2 1 (!^ "values:")
       (surround_separate_map 2 1
-         (!^ "[]") (!^ "[") (!^ ", ") (!^ "]") binding valuation)
+         (!^ "[]") (!^ "[") (!^ "," ^^ break 1) (!^ "]") binding valuation)
     ^^ hardline ^^ prefix 2 1 (!^ "discrepancy:") (!^ (string_of_int point))
 
 let equal cex1 cex2 =

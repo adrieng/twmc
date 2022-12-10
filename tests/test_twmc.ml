@@ -49,7 +49,7 @@ let test_valid () =
       (* Universal properties. *)
       Le (Comp (x, Under (x, y)), y);
       Le (Comp (Over (x, y), y), x);
-      Le (x, Under (Comp (x, y), y));
+      Le (x, Over (Comp (x, y), y));
       Le (y, Under (x, Comp (x, y)));
       Le (Meet (x, y), y);
       Le (Meet (x, y), x);

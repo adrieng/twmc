@@ -33,8 +33,8 @@ let of_points ~last points =
        let open Enat in
        assert (i1 < i2);
        assert (j1 <= j2);
-       assert (i1 < omega);
-       assert (j1 < omega);
+       (* assert (i1 < omega); *)
+       (* assert (j1 < omega); *)
        let rec interpolate acc (i : Enat.t) (j : Enat.t) =
          if i2 = Enat.omega then List.rev acc, Enat.of_int 1
          else if j = Enat.omega then List.rev acc, Enat.omega
