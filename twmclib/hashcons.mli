@@ -1,28 +1,14 @@
 (** This module implements first-order terms with hash-consing, i.e., provides a
-   representation of first-order terms guaranteeing that structurally equal
-   terms are physically equal.
+    representation of first-order terms guaranteeing that structurally equal
+    terms are physically equal.
 
-   Deviating from universal algebra, we consider that variables are part of the
-   signature itself. This simplifies the implementation since we do not deal
-   with substitution at the moment. *)
-module Term(S : Sigs.Signature) : sig
-  (** The type of terms is abstract, making sure that a client can only build
-     values of this type using functions from this module. *)
-  type t
+    Deviating from universal algebra, we consider that variables are part of the
+    signature itself. This simplifies the implementation since we do not deal
+    with substitution at the moment. *)
 
-  (** The comparison functions ([compare], [equal], [hash]) pertaining to {!
-     Sigs.HashedOrderedType} run in constant time. *)
-  include Sigs.HashedOrderedType with type t := t
+module type TermBuilder =
+  functor (S : Sigs.Signature) -> Sigs.Term with module S = S
 
-  val hash_fold : t Sigs.hashfolder
-
-  (** [make t] turns an operator applied to a bunch of term into a term. *)
-  val make : t S.t -> t
-
-  (** [view t] exposes the body of a term, i.e., its internal representation. *)
-  val view : t -> t S.t
-
-  (** [pp t] pretty-prints the (hash-consed) term. If [debug] is set to true,
-      more information is printed.  *)
-  val pp : ?debug:bool -> t -> PPrint.document
-end
+module Share : TermBuilder
+module NoShare : TermBuilder
+module Default : TermBuilder

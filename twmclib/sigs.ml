@@ -44,6 +44,30 @@ module type Signature = sig
   val hash_fold : 'a hashfolder -> 'a t hashfolder
 end
 
+module type Term = sig
+  module S : Signature
+
+  (** The type of terms is abstract, making sure that a client can only build
+     values of this type using functions from this module. *)
+  type t
+
+  (** The comparison functions ([compare], [equal], [hash]) pertaining to {!
+     Sigs.HashedOrderedType} run in constant time. *)
+  include HashedOrderedType with type t := t
+
+  val hash_fold : t hashfolder
+
+  (** [make t] turns an operator applied to a bunch of term into a term. *)
+  val make : t S.t -> t
+
+  (** [view t] exposes the body of a term, i.e., its internal representation. *)
+  val view : t -> t S.t
+
+  (** [pp t] pretty-prints the (hash-consed) term. If [debug] is set to true,
+      more information is printed.  *)
+  val pp : ?debug:bool -> t -> PPrint.document
+end
+
 module Int = struct
   let mod_b1 x y = succ (pred x mod y)
 

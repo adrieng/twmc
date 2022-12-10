@@ -1,6 +1,6 @@
 module V = Symbol.Make()
 
-module S = struct
+module Sig = struct
   type 'a t =
     | SVar of (V.t [@compare V.compare] [@equal V.equal])
     | SEval of Basic.t * 'a
@@ -34,13 +34,13 @@ module S = struct
        group (!^ "last" ^//^ Basic.pp t)
 end
 
-type 'a sign = 'a S.t =
+type 'a sign = 'a Sig.t =
   | SVar of V.t
   | SEval of Basic.t * 'a
   | SSucc of 'a
   | SLast of Basic.t
 
-module T = Hashcons.Term(S)
+module T = Hashcons.Default(Sig)
 
 include T
 

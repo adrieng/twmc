@@ -1,4 +1,7 @@
-module Term(S : Sigs.Signature) = struct
+module type TermBuilder =
+  functor (S : Sigs.Signature) -> Sigs.Term with module S = S
+
+module Share(S : Sigs.Signature) = struct
   module M = struct
     (** The implementation below is inspired by Filliâtre and Conchon's
        "Type-Safe Modular Hash-Consing" (ML'06). *)
@@ -26,6 +29,8 @@ module Term(S : Sigs.Signature) = struct
       Ppx_hash_lib.Std.Hash.fold_int state t.hash
   end
 
+  module S = S
+
   include M
 
   module HT = Hashtbl.Make(M)
@@ -52,7 +57,7 @@ module Term(S : Sigs.Signature) = struct
     t.body
 
   let rec pp ?(debug = false) term =
-    let rec loop { body; id; hash; } =
+    let loop { body; id; hash; } =
       let open PPrint in
       let d = S.pp pp body in
       if debug
@@ -75,3 +80,31 @@ module Term(S : Sigs.Signature) = struct
   let compare t1 t2 =
     Stdlib.compare t1.id t2.id
 end
+
+module NoShare(S : Sigs.Signature) = struct
+  module S = S
+
+  type t = C of t S.t
+
+  let rec compare (C x) (C y) =
+    S.compare compare x y
+
+  let equal t1 t2 =
+    0 = compare t1 t2
+
+  let rec pp ?debug (C x) = ignore debug; S.pp pp x
+
+  let rec hash_fold state (C x) =
+    S.hash_fold hash_fold state x
+
+  let hash =
+    let open Ppx_hash_lib.Std in
+    let state = Hash.alloc () in
+    fun x -> Hash.get_hash_value @@ hash_fold state x
+
+  let make x = C x
+
+  let view (C x) = x
+end
+
+module Default = Share

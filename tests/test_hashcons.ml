@@ -28,7 +28,7 @@ module MS = struct
        prefix 2 1 (!^ "M") (parens @@ group @@ d1 ^^ comma ^^  break 1 ^^ d2)
 end
 
-module T = Hashcons.Term(MS)
+module T = Hashcons.Share(MS)
 let term, different_term =
   let ff = Print.PPrint.to_fmt T.pp in
   Alcotest.testable ff T.equal,
