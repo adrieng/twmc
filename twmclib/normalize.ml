@@ -17,7 +17,7 @@ let rec eliminate_binary_residuals t =
   | Over (t, u) ->
      let t = eliminate_binary_residuals t in
      let u = eliminate_binary_residuals u in
-     Neg (Comp (t, Neg u))
+     Neg (Comp (u, Neg t))
   | Meet (t, u) ->
      let t = eliminate_binary_residuals t in
      let u = eliminate_binary_residuals u in
