@@ -16,9 +16,9 @@ $ ./deps.sh     # Install dependencies
 $ dune build    # Compile tw.exe
 ```
 
-The generated binary is in `_build/default` and can be run using `dune exec`.
+The generated binary is in `_build/default/twmc` and can be run using `dune exec`.
 
 ```shell
-$ dune exec ./twmc.exe -- -help
-$ dune exec ./twmc.exe -- "x * y <= y * x"
+$ dune exec twmc/twmc.exe -- -help
+$ dune exec twmc/twmc.exe -- "x * y <= y * x"
 ```
