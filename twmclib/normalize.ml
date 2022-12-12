@@ -138,3 +138,19 @@ let rec to_cnf t =
   | Neg t ->
      let t = get_atomic @@ to_cnf t in
      [[Basic.Neg t]]
+
+let rec simplify =
+  let open Basic in
+  function
+  | (Var _ | Id) as t -> t
+  | Comp (t, u) ->
+     begin match simplify t, simplify u with
+     | Id, t | t, Id -> t
+     | t, u -> Comp (t, u)
+     end
+  | Neg t ->
+     begin match simplify t with
+     | Id -> Id
+     | Neg t -> t
+     | t -> Neg t
+     end

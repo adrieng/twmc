@@ -16,6 +16,7 @@ type ('logic_query, 'result) solver =
   ?on_residual_simple_term:(Term.t -> unit) ->
   ?on_canonical_term:(Term.t -> unit) ->
   ?on_basic_positive_terms:(Basic.t list -> unit) ->
+  ?on_simplified_basic_positive_terms:(Basic.t list -> unit) ->
   ?on_saturated_sample_set:(Sampleset.t -> unit) ->
   ?on_logic_query:(pp:('logic_query -> PPrint.document)
                    -> 'logic_query -> unit) ->
@@ -29,6 +30,7 @@ let to_logic
       ?(on_residual_simple_term = fun _ -> ())
       ?(on_canonical_term = fun _ -> ())
       ?(on_basic_positive_terms = fun _ -> ())
+      ?(on_simplified_basic_positive_terms = fun _ -> ())
       ?(on_saturated_sample_set = fun _ -> ())
       ?(on_logic_query = fun ~pp _ -> ignore pp; ())
       pb : (a * (b Logic.valuation -> Counterexample.t)) list =
@@ -49,6 +51,8 @@ let to_logic
   on_canonical_term s;
   let tss = Normalize.to_cnf s in
   List.iter on_basic_positive_terms tss;
+  let tss = List.map (List.map Normalize.simplify) tss in
+  List.iter on_simplified_basic_positive_terms tss;
   (* Now, for each disjunction of basic terms, we build a saturated sample
      set and a sample variable. *)
   let sss =
@@ -79,6 +83,7 @@ let to_solution
       ?(on_residual_simple_term = fun _ -> ())
       ?(on_canonical_term = fun _ -> ())
       ?(on_basic_positive_terms = fun _ -> ())
+      ?(on_simplified_basic_positive_terms = fun _ -> ())
       ?(on_saturated_sample_set = fun _ -> ())
       ?(on_logic_query = fun ~pp _ -> ignore pp; ())
       pb =
@@ -125,6 +130,7 @@ let to_solution
       ~on_residual_simple_term
       ~on_canonical_term
       ~on_basic_positive_terms
+      ~on_simplified_basic_positive_terms
       ~on_saturated_sample_set
       ~on_logic_query
       pb

@@ -26,6 +26,13 @@ let on_basic_positive_terms ts =
                                     (!^ "id <=" ^/^
                                        separate_map (!^ " \\/ ") Basic.pp ts))
 
+let on_simplified_basic_positive_terms ts =
+  if verbosity_above 0
+  then Print.PPrint.print PPrint.(prefix 2 1
+                                    (!^ "Simplified subproblem:")
+                                    (!^ "id <=" ^/^
+                                       separate_map (!^ " \\/ ") Basic.pp ts))
+
 let on_saturated_sample_set ss =
   if verbosity_above 1
   then Print.PPrint.print PPrint.(prefix 2 1 (!^ "SSS:") (Sampleset.pp ss))
@@ -50,6 +57,7 @@ let process s =
          ~on_residual_simple_term
          ~on_canonical_term
          ~on_basic_positive_terms
+         ~on_simplified_basic_positive_terms
          ~on_saturated_sample_set
          ~on_logic_query
          p

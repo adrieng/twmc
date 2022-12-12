@@ -13,3 +13,7 @@ exception Not_canonical
 (** [to_cnf t] returns a finite meet of finite join of basic terms. May raise {!
     Not_canonical} if [t] is not in canonical form. *)
 val to_cnf : Term.t -> Basic.t list list
+
+(** [simplify t] rewrites [t] to an equivalent term [u] using basic algebraic
+    laws (neutrality of Id, idempotence of neg). *)
+val simplify : Basic.t -> Basic.t
