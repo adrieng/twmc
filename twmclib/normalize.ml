@@ -150,7 +150,6 @@ let rec simplify =
      end
   | Neg t ->
      begin match simplify t with
-     | Id -> Id
      | Neg t -> t
      | t -> Neg t
      end
