@@ -28,5 +28,13 @@ val to_logic :
   (module Logic.S with type query = 'a and type V.t = 'b) ->
   ('a, (('a * ('b Logic.valuation -> Counterexample.t)) list)) solver
 
+module Solution : sig
+  type t
+  val valid : t
+  val invalid : t
+  val pp : t -> PPrint.document
+  val equal : t -> t -> bool
+end
+
 val to_solution :
-  (Backends.Z3.query, [`Valid | `Invalid of Counterexample.t]) solver
+  (Backends.Z3.query, Solution.t) solver

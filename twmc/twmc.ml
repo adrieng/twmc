@@ -62,13 +62,7 @@ let process s =
          ~on_logic_query
          p
      in
-     begin match sol with
-     | `Valid ->
-        Printf.printf "VALID\n"
-     | `Invalid cm ->
-        Print.PPrint.print
-          PPrint.(prefix 2 1 (!^ "INVALID at:") (Counterexample.pp cm))
-     end
+     Print.PPrint.print (Problem.Solution.pp sol)
   | Dump file ->
      let oc = open_out file in
      Problem.to_logic (module Backends.SMTLIB) p
@@ -92,6 +86,12 @@ let _ =
              "-d",
              Set debug,
              " Print debug messages";
+             "-n",
+             Unit (fun () -> simplify := false),
+             " Do not simplify basic terms";
+             "-stat",
+             Unit (fun () -> statistics := true),
+             " Print statistics";
            ])
     process
     (Printf.sprintf

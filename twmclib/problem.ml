@@ -51,7 +51,11 @@ let to_logic
   on_canonical_term s;
   let tss = Normalize.to_cnf s in
   List.iter on_basic_positive_terms tss;
-  let tss = List.map (List.map Normalize.simplify) tss in
+  let tss =
+    if !Options.simplify
+    then List.map (List.map Normalize.simplify) tss
+    else tss
+  in
   List.iter on_simplified_basic_positive_terms tss;
   (* Now, for each disjunction of basic terms, we build a saturated sample
      set and a sample variable. *)
@@ -78,6 +82,28 @@ let to_logic
   List.iter (fun (q, _) -> on_logic_query ~pp:L.pp q) queries;
   queries
 
+module Solution = struct
+  type t = Valid
+         | Invalid of Counterexample.t
+
+  let valid = Valid
+
+  let invalid = Invalid Counterexample.dummy
+
+  let pp =
+    let open PPrint in
+    function
+    | Valid ->
+       !^ "VALID\n"
+     | Invalid cm ->
+        prefix 2 1 (!^ "INVALID at:") (Counterexample.pp cm)
+
+  let equal sol1 sol2 =
+    match sol1, sol2 with
+    | Valid, Valid | Invalid _, Invalid _ -> true
+    | _ -> false
+end
+
 let to_solution
       ?(on_initial_positive_term = fun _ -> ())
       ?(on_residual_simple_term = fun _ -> ())
@@ -96,7 +122,7 @@ let to_solution
          r_s;
        exit 1
     | Z3.Solver.UNSATISFIABLE ->
-       `Valid
+       Solution.Valid
     | Z3.Solver.SATISFIABLE ->
        begin match Backends.Z3.model query with
        | None ->
@@ -106,17 +132,18 @@ let to_solution
             r_s;
           exit 1
        | Some countermodel ->
-          `Invalid (builder (fun x -> Enat.raw_of_int @@ countermodel x))
+          Solution.Invalid
+            (builder (fun x -> Enat.raw_of_int @@ countermodel x))
        end
   in
 
   let rec solve_all queries =
     match queries with
     | [] ->
-       `Valid
+       Solution.Valid
     | (query, builder) :: queries ->
        begin match solve query builder with
-       | `Valid ->
+       | Solution.Valid ->
           solve_all queries
        | invalid ->
           invalid

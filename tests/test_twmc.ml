@@ -1,19 +1,9 @@
 open Twmclib
 
 let result =
-  let pp fmt r =
-    match r with
-    | `Valid ->
-       Format.fprintf fmt "valid"
-    | `Invalid cex ->
-       Format.fprintf fmt "invalid: %a"
-         (Print.PPrint.to_fmt Counterexample.pp) cex
-  and equal r1 r2 =
-    match r1, r2 with
-    | `Valid, `Valid | `Invalid _, `Invalid _ -> true
-    | _ -> false
-  in
-  Alcotest.testable pp equal
+  Alcotest.testable
+    (Print.PPrint.to_fmt Problem.Solution.pp)
+    Problem.Solution.equal
 
 let test_case_of_problem expected prob =
   let repr = Print.PPrint.to_string @@ Problem.pp prob in
@@ -32,7 +22,7 @@ let test_valid () =
   let open Term in
   let open Problem in
   List.map
-    (test_case_of_problem `Valid)
+    (test_case_of_problem Problem.Solution.valid)
     [
       (* Congruence-like tests. *)
       Eq (x, x);
@@ -69,7 +59,7 @@ let test_invalid () =
   let open Term in
   let open Problem in
   List.map
-    (test_case_of_problem (`Invalid Counterexample.dummy))
+    (test_case_of_problem Solution.invalid)
     [
       Le (x, y);
       Le (x, Comp (x, x));
