@@ -169,6 +169,11 @@ module Z3 = struct
   let new_context () =
     Z3.mk_context [("model", "true")]
 
+  let () =
+    let log_file = Filename.temp_file "twmc_z3_" ".log" in
+    Format.eprintf "Z3 log file: %s@." log_file;
+    ignore @@ Z3.Log.open_ log_file
+
   let cx =
     ref (new_context ())
 
@@ -259,12 +264,6 @@ module Z3 = struct
 
   let comment _ s =
     Z3.Log.append s
-
-  let () =
-    let log_file = Filename.temp_file "twmc_z3_" "log" in
-    if Options.verbosity_above 4
-    then Format.eprintf "Z3 log file: %s@." log_file;
-    ignore @@ Z3.Log.open_ log_file
 
   let pp query =
     PPrint.(!^ (Z3.Solver.to_string query.solver))

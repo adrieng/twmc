@@ -8,8 +8,8 @@ type t
 val make : int array -> Enat.t -> t
 
 (** [of_points ~last points] creates a compact time warp whose values are
-    determined by [points] and whose last value. *)
-val of_points : last:Enat.t -> (Enat.t * Enat.t) list -> t
+    determined by [points] and whose last value is [last_y]. *)
+val of_points : (Enat.t * Enat.t) list -> t
 
 (** [eval p i] returns [p(i)]. *)
 val eval : t -> Enat.t -> Enat.t

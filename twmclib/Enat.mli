@@ -8,6 +8,11 @@ val view : t -> [`Omega | `Fin of int]
 (** Display an extended number as a string. *)
 val to_string : t -> string
 
+(** Pretty-print an extended number. *)
+val pp : t Print.fmt
+
+val print : t Print.printer
+
 (** [of_int n] raises {! Invalid_argument} if [n] is negative. *)
 val of_int : int -> t
 

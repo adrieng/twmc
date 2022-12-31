@@ -18,7 +18,7 @@ let make u v =
     v;
   }
 
-let of_points ~last points =
+let of_points points =
   let points = (Enat.zero, Enat.zero) :: points in
   let points = List.sort_uniq (fun (a, _) (b, _) -> Enat.compare a b) points in
   let rec loop : int list -> (Enat.t * Enat.t) list -> int list * Enat.t =

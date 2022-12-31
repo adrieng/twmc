@@ -8,10 +8,61 @@
    This is the last key part of the algorithm, since this query can then be sent
    to an SMT solver and checked for satisfiability. *)
 
-let translate
+type t =
+  {
+    s : Sampleset.t;
+    m : Sample.t -> Enat.t;
+    k : Sample.V.t;
+    t : Basic.t list;
+  }
+
+let pp { s; m; _ } =
+  let open PPrint in
+  separate hardline @@
+    Sampleset.fold_all
+      (fun a doc ->
+        prefix 2 1 (Sample.pp a ^^ !^ " =") Enat.(print @@ m a) :: doc)
+      s
+      []
+
+let support d = d.s
+
+let eval d a = d.m a
+
+let counterexample d =
+  Sampleset.fold_evals
+    (fun t args cex ->
+      match t with
+      | Basic.Var x ->
+         Counterexample.add cex x
+           (EvLinear.of_points
+              (Sample.Set.to_seq args
+               |> Seq.map (fun a -> d.m a, d.m Sample.(eval t a))
+               |> List.of_seq))
+      | _ ->
+         cex)
+    d.s
+    Counterexample.{ valuation = [];
+                     point = Enat.to_int @@ d.m @@ Sample.var d.k; }
+
+type ('query, 'var) existence_statement =
+  {
+    s : Sampleset.t;
+    k : Sample.V.t;
+    t : Basic.t list;
+    v : Sample.t -> 'var;
+    q : 'query;
+  }
+
+let query_of_existence_statement stm = stm.q
+
+let statement_of_basic_conjunctive_problem
       (type a b)
       (module L : Logic.S with type query = a and type V.t = b)
-      set k ts : a * (b Logic.valuation -> Counterexample.t) =
+      ~(sample_set : Sampleset.t)
+      ~(root_variable : Sample.V.t)
+      ~(basic_terms_under_test : Basic.t list) :
+      (a, b) existence_statement =
   let q = L.make () in
 
   let v =
@@ -114,7 +165,7 @@ let translate
 
           | _ ->
              ())
-        set;
+        sample_set;
 
       (* Conditions 3.6-3.12. *)
       begin match t with
@@ -160,44 +211,29 @@ let translate
          ()
       end
     )
-    set;
+    sample_set;
 
   (* These are the top-level conditions to be falsified, expressing that we are
      looking for counter-examples. *)
   comment "Root constraints";
-  List.iter (fun t -> holds Sample.(deval t (var k) < d (var k))) ts;
+  List.iter
+    (fun t ->
+      holds Sample.(deval t (var root_variable) < d (var root_variable)))
+    basic_terms_under_test
+  ;
 
-  (* Build a counter-example from an SMT-level counter-model. *)
-  let build_countermodel (c : b Logic.valuation) =
-    let s a = c @@ v a in
-    Sampleset.fold_evals
-      (fun t samples ce ->
-        begin match t with
-        | Basic.Var x ->
-           (* FIXME conversion *)
-           let last = s Sample.(eval t @@ last t) in
-           let points = Sample.Set.to_seq samples
-                        |> Seq.map (fun a -> s a, s Sample.(eval t a))
-                        |> List.of_seq
-                        |> List.sort_uniq
-                             (fun (a, _) (b, _) -> Enat.compare a b) in
-           if Options.verbosity_above 3
-           then
-             begin
-               Format.eprintf "POINTS for %s:@." (Term.V.to_string x);
-               List.iter (fun (x, y) ->
-                   Format.eprintf "  (%s, %s)@."
-                     (Enat.to_string x)
-                     (Enat.to_string y)) points
-             end;
-           Counterexample.add ce x (EvLinear.of_points ~last points)
-        | _ ->
-           ce
-        end)
-      set
-      Counterexample.{ valuation = [];
-                       point = Enat.to_int @@ c @@ v @@ Sample.var k; }
-  in
+  {
+    s = sample_set;
+    k = root_variable;
+    t = basic_terms_under_test;
+    v;
+    q;
+  }
 
-  (* We return the final query together with the countermodel builder. *)
-  q, build_countermodel
+let exists ~solve { s; k; t; v; q; } =
+  match solve q with
+  | `Sat f ->
+     let m a = Enat.of_int @@ f @@ v a in
+     Some { s; m; k; t; }
+  | `Unsat ->
+     None

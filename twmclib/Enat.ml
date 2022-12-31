@@ -3,6 +3,11 @@ type t = int
 let to_string x =
   if x = 0 then "omega" else string_of_int (x - 1)
 
+let pp fmt x =
+  Format.fprintf fmt "%s" (to_string x)
+
+let print x = PPrint.string @@ to_string x
+
 let view x =
   assert (x >= 0);
   if x = 0 then `Omega else `Fin (x - 1)

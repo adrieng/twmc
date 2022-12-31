@@ -5,13 +5,14 @@ let result =
     (Print.PPrint.to_fmt Problem.Solution.pp)
     Problem.Solution.equal
 
-let test_case_of_problem expected prob =
-  let repr = Print.PPrint.to_string @@ Problem.pp prob in
+let test_case_of_problem expected pb =
+  let repr = Print.PPrint.to_string @@ Problem.pp pb in
   Alcotest.test_case
     repr
     `Quick
     (fun () ->
-      Alcotest.check result repr expected (Problem.to_solution prob))
+      let stms = Problem.existence_statements (module Backends.Z3) pb in
+      Alcotest.check result repr expected (Problem.solve_with_z3 stms))
 
 let x_id = Term.V.fresh ~name:"x" ()
 let y_id = Term.V.fresh ~name:"y" ()

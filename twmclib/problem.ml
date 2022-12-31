@@ -11,19 +11,7 @@ let pp pb =
   | Eq (t, u) ->
      infix 2 1 (!^ "=") (bt t) (bt u)
 
-type ('logic_query, 'result) solver =
-  ?on_initial_positive_term:(Term.t -> unit) ->
-  ?on_residual_simple_term:(Term.t -> unit) ->
-  ?on_canonical_term:(Term.t -> unit) ->
-  ?on_basic_positive_terms:(Basic.t list -> unit) ->
-  ?on_simplified_basic_positive_terms:(Basic.t list -> unit) ->
-  ?on_saturated_sample_set:(Sampleset.t -> unit) ->
-  ?on_logic_query:(pp:('logic_query -> PPrint.document)
-                   -> 'logic_query -> unit) ->
-  t ->
-  'result
-
-let to_logic
+let existence_statements
       (type a b)
       (module L : Logic.S with type query = a and type V.t = b)
       ?(on_initial_positive_term = fun _ -> ())
@@ -32,8 +20,7 @@ let to_logic
       ?(on_basic_positive_terms = fun _ -> ())
       ?(on_simplified_basic_positive_terms = fun _ -> ())
       ?(on_saturated_sample_set = fun _ -> ())
-      ?(on_logic_query = fun ~pp _ -> ignore pp; ())
-      pb : (a * (b Logic.valuation -> Counterexample.t)) list =
+      pb : (a, b) Diagram.existence_statement list =
   (* First, we translate the problem [pb] into a term [s] such that [pb] is
      valid iff [id <= s] is valid. *)
   let s =
@@ -74,13 +61,14 @@ let to_logic
       tss
   in
   List.iter (fun (_, _, ss) -> on_saturated_sample_set ss) sss;
-  let queries =
-    List.map
-      (fun (k, ts, ss) -> Diagram.translate (module L) ss k ts)
-      sss
-  in
-  List.iter (fun (q, _) -> on_logic_query ~pp:L.pp q) queries;
-  queries
+  List.map
+    (fun (root_variable, basic_terms_under_test, sample_set) ->
+      Diagram.statement_of_basic_conjunctive_problem
+        (module L)
+        ~sample_set
+        ~root_variable
+        ~basic_terms_under_test)
+    sss
 
 module Solution = struct
   type t = Valid
@@ -104,60 +92,37 @@ module Solution = struct
     | _ -> false
 end
 
-let to_solution
-      ?(on_initial_positive_term = fun _ -> ())
-      ?(on_residual_simple_term = fun _ -> ())
-      ?(on_canonical_term = fun _ -> ())
-      ?(on_basic_positive_terms = fun _ -> ())
-      ?(on_simplified_basic_positive_terms = fun _ -> ())
-      ?(on_saturated_sample_set = fun _ -> ())
-      ?(on_logic_query = fun ~pp _ -> ignore pp; ())
-      pb =
-  let solve query builder =
-    match Backends.Z3.solve query with
-    | Z3.Solver.UNKNOWN ->
-       let r_s = Print.PPrint.to_string (pp pb) in
-       Printf.eprintf
-         "%s: unknown result, please send to <guatto@irif.fr>\n"
-         r_s;
-       exit 1
-    | Z3.Solver.UNSATISFIABLE ->
-       Solution.Valid
-    | Z3.Solver.SATISFIABLE ->
-       begin match Backends.Z3.model query with
-       | None ->
-          let r_s = Print.PPrint.to_string (pp pb) in
-          Printf.eprintf
-            "%s: no model, please send to <guatto@irif.fr>\n"
-            r_s;
-          exit 1
-       | Some countermodel ->
-          Solution.Invalid
-            (builder (fun x -> Enat.raw_of_int @@ countermodel x))
-       end
-  in
-
-  let rec solve_all queries =
-    match queries with
+let solve_with_z3 ?(on_diagram = (fun _ -> ()))
+  =
+  let rec loop = function
     | [] ->
        Solution.Valid
-    | (query, builder) :: queries ->
-       begin match solve query builder with
-       | Solution.Valid ->
-          solve_all queries
-       | invalid ->
-          invalid
+    | stm :: stms ->
+       let err () =
+         Printf.eprintf
+           "unknown result, please send the problem to <guatto@irif.fr>\n";
+         exit 1
+       in
+       let solve q =
+         match Backends.Z3.solve q with
+         | Z3.Solver.UNKNOWN ->
+            err ()
+         | Z3.Solver.UNSATISFIABLE ->
+            `Unsat
+         | Z3.Solver.SATISFIABLE ->
+            begin match Backends.Z3.model q with
+            | None ->
+               err ()
+            | Some f ->
+               `Sat f
+            end
+       in
+       begin match Diagram.exists ~solve stm with
+       | None ->
+          loop stms
+       | Some d ->
+          on_diagram d;
+          Solution.Invalid (Diagram.counterexample d)
        end
   in
-
-  solve_all @@
-    to_logic
-      (module Backends.Z3)
-      ~on_initial_positive_term
-      ~on_residual_simple_term
-      ~on_canonical_term
-      ~on_basic_positive_terms
-      ~on_simplified_basic_positive_terms
-      ~on_saturated_sample_set
-      ~on_logic_query
-      pb
+  loop

@@ -10,23 +10,18 @@ type t =
 
 val pp : t Print.printer
 
-(** {2 Solvers} *)
+(** {2 Core Decision Procedure} *)
 
-type ('logic_query, 'result) solver =
+val existence_statements :
+  (module Logic.S with type query = 'a and type V.t = 'b) ->
   ?on_initial_positive_term:(Term.t -> unit) ->
   ?on_residual_simple_term:(Term.t -> unit) ->
   ?on_canonical_term:(Term.t -> unit) ->
   ?on_basic_positive_terms:(Basic.t list -> unit) ->
   ?on_simplified_basic_positive_terms:(Basic.t list -> unit) ->
   ?on_saturated_sample_set:(Sampleset.t -> unit) ->
-  ?on_logic_query:(pp:('logic_query -> PPrint.document)
-                   -> 'logic_query -> unit) ->
   t ->
-  'result
-
-val to_logic :
-  (module Logic.S with type query = 'a and type V.t = 'b) ->
-  ('a, (('a * ('b Logic.valuation -> Counterexample.t)) list)) solver
+  ('a, 'b) Diagram.existence_statement list
 
 module Solution : sig
   type t
@@ -36,5 +31,7 @@ module Solution : sig
   val equal : t -> t -> bool
 end
 
-val to_solution :
-  (Backends.Z3.query, Solution.t) solver
+val solve_with_z3 :
+  ?on_diagram:(Diagram.t -> unit) ->
+  (Backends.Z3.query, Backends.Z3.var) Diagram.existence_statement list ->
+  Solution.t
