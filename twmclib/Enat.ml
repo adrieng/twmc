@@ -19,6 +19,8 @@ let omega = 0
 
 let zero = 1
 
+let is_omega x = x = 0
+
 let to_int x = if x = omega then invalid_arg "to_int" else x - 1
 
 let ( <= ) x y = (y = omega) || (x <> omega && x <= y)

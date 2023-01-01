@@ -3,7 +3,7 @@
 (** A counterexample to a relation [r]. *)
 type t =
   {
-    valuation : (Warp.id * EvLinear.t) list;
+    valuation : (Warp.id * EventuallyAffine.t) list;
     (** The valuation assigns to every variable in [r] a compact term.  *)
     point : int;
     (** The time step at which the relation [r] fails when its variables are
@@ -11,7 +11,7 @@ type t =
   }
 
 (** [add ce x p] adds the binding [x = p] to the counterexample [ce]. *)
-val add : t -> Warp.id -> EvLinear.t -> t
+val add : t -> Warp.id -> EventuallyAffine.t -> t
 
 (** Print a counterexample as a PPrint.document. *)
 val pp : t -> PPrint.document

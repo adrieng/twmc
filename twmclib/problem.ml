@@ -84,7 +84,7 @@ module Solution = struct
     | Valid ->
        !^ "VALID\n"
      | Invalid cm ->
-        prefix 2 1 (!^ "INVALID at:") (Counterexample.pp cm)
+        group @@ prefix 2 1 (!^ "INVALID at:") (Counterexample.pp cm)
 
   let equal sol1 sol2 =
     match sol1, sol2 with

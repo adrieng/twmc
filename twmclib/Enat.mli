@@ -22,6 +22,9 @@ val to_int : t -> int
 (** A number larger than all naturals. *)
 val omega : t
 
+(** [is_omega x] is equivalent to [view x = `Omega] *)
+val is_omega : t -> bool
+
 (** Comparison operator. *)
 val ( <= ) : t -> t -> bool
 

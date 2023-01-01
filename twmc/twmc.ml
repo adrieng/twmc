@@ -71,7 +71,9 @@ let smtlib s output_fn =
      in
      List.iteri
        (fun i stm ->
-         let oc = open_out (Printf.sprintf "%s.%d.smt" pref i) in
+         let fn = Printf.sprintf "%s.%d.smt" pref i in
+         let oc = open_out fn in
+         Printf.printf "Writing existence statement to %s.\n" fn;
          Backends.SMTLIB.to_channel oc
          @@ Diagram.query_of_existence_statement stm;
          close_out oc) stms

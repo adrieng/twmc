@@ -34,11 +34,13 @@ let counterexample d =
     (fun t args cex ->
       match t with
       | Basic.Var x ->
+         let last_y = d.m Sample.(eval t (last t)) in
          Counterexample.add cex x
-           (EvLinear.of_points
-              (Sample.Set.to_seq args
-               |> Seq.map (fun a -> d.m a, d.m Sample.(eval t a))
-               |> List.of_seq))
+           (EventuallyAffine.extend
+              ((Enat.omega, last_y)
+               :: (Sample.Set.to_seq args
+                   |> Seq.map (fun a -> d.m a, d.m Sample.(eval t a))
+                   |> List.of_seq)))
       | _ ->
          cex)
     d.s
@@ -233,7 +235,7 @@ let statement_of_basic_conjunctive_problem
 let exists ~solve { s; k; t; v; q; } =
   match solve q with
   | `Sat f ->
-     let m a = Enat.of_int @@ f @@ v a in
+     let m a = Enat.raw_of_int @@ f @@ v a in
      Some { s; m; k; t; }
   | `Unsat ->
      None
