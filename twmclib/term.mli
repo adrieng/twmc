@@ -5,7 +5,7 @@ type t =
   | Var of V.t
   (** Time warp variables. *)
   | Id
-  (** Predecessor time warp. *)
+  (** Identity time warp. *)
   | Comp of t * t
   (** Composition, i.e., [Comp (t, u)] maps [n] to [t (u n)]. *)
   | Over of t * t
