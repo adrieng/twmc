@@ -1,6 +1,6 @@
 type t =
   {
-    valuation : (Warp.id * EventuallyAffine.t) list;
+    valuation : (Warp.id * Regular.t) list;
     point : int;
   }
 
@@ -13,7 +13,7 @@ let pp ({ valuation; point; } as cex) =
   if cex == dummy then !^ "(dummy)"
   else
     let binding (x, t) =
-      PPrint.prefix 2 1 (Warp.Print.id x ^^ !^ " =") (EventuallyAffine.print t)
+      PPrint.prefix 2 1 (Warp.Print.id x ^^ !^ " =") (Regular.print t)
     in
     separate_map
       hardline
@@ -25,4 +25,4 @@ let pp ({ valuation; point; } as cex) =
 
 let equal cex1 cex2 =
   cex1.point = cex2.point
-  && Equal.assoc_list (=) EventuallyAffine.equal cex1.valuation cex2.valuation
+  && Equal.assoc_list (=) Regular.equal cex1.valuation cex2.valuation

@@ -36,7 +36,7 @@ let counterexample d =
       | Basic.Var x ->
          let last_y = d.m Sample.(eval t (last t)) in
          Counterexample.add cex x
-           (EventuallyAffine.extend
+           (Regular.extend
               ((Enat.omega, last_y)
                :: (Sample.Set.to_seq args
                    |> Seq.map (fun a -> d.m a, d.m Sample.(eval t a))

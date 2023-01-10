@@ -39,7 +39,7 @@ and pp_simple t =
   | Var x ->
      pp_var x
   | Id ->
-     !^ "id"
+     !^ "e"
   | Neg t ->
      pp_simple t ^^ !^ "'"
   | t ->

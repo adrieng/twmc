@@ -11,7 +11,7 @@ let rec pp t =
   | Var x ->
      Term.pp_var x
   | Id ->
-     !^ "id"
+     !^ "e"
   | Comp (t, u) ->
      group @@ pp t ^//^ pp u
   | Neg t ->

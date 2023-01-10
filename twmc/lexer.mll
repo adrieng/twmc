@@ -8,7 +8,7 @@ let id = ['a'-'z' 'A'-'Z']+
 
 rule token = parse
   | whitespace+ { token lexbuf }
-  | "id" { ID }
+  | "e" { ID }
   | id { IDENT (Lexing.lexeme lexbuf) }
   | "*" { STAR }
   | "/\\" { MEET }
